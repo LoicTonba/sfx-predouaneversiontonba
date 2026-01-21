@@ -47,7 +47,7 @@ export async function createClient(data: { nom: string }) {
       ORDER BY [ID_Client] DESC
     `;
 
-    revalidatePath("/client/list");
+    revalidatePath("/client");
     return { success: true, data: client[0] };
   } catch (error) {
     console.error('Erreur création client:', error);

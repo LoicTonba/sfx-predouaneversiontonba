@@ -27,7 +27,7 @@ export const DashboardNavbar = () => {
         <>
             <DashboardCommand open={commandOpen} setOpen={setCommandOpen} />
             <nav className="sticky top-0 z-30 h-14 border-b bg-background/80 backdrop-md">
-                <div className="grid h-full grid-cols-[auto_1fr_auto] items-center gap-4 px-4">
+                <div className="grid  grid-cols-[auto_1fr_auto] items-center gap-4 px-4 py-2">
                     {/* LEFT: Sidebar toggle */}
                     <Button 
                         variant="outline" 
