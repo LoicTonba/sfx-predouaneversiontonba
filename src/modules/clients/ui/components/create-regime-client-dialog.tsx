@@ -25,7 +25,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { getAllClients } from "../../server/actions";
-import { getAllRegimesDeclarationsForSelect, createRegimeClient } from "../../server/regime-client-actions";
+import { getAllRegimesDeclarationsForSelect, createRegimeClient } from "../../../regime-client/server/regime-client-actions";
 
 const createRegimeClientSchema = z.object({
     clientId: z.string().min(1, "Veuillez sélectionner un client"),

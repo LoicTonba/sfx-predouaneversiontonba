@@ -25,7 +25,7 @@ import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { getAllRegimesDeclarationsForSelect, associateRegimeToClient } from "../../server/regime-client-actions";
+import { getAllRegimesDeclarationsForSelect, associateRegimeToClient } from "../../../regime-client/server/regime-client-actions";
 
 const associateRegimeSchema = z.object({
     regimeId: z.string().min(1, "Veuillez sélectionner un régime"),
