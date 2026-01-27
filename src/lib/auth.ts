@@ -7,7 +7,7 @@
 
 import { getSession } from '@/modules/auth/server/actions';
 
-export const auth = {
+const auth = {
     api: {
         async getSession(_options?: any) {
             const session = await getSession();
@@ -30,3 +30,5 @@ export const auth = {
         },
     },
 };
+
+export default auth;

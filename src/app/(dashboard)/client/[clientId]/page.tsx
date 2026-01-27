@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/lib/auth";
+import auth from "@/lib/auth";
 import { Suspense } from "react";
 import { getClientById } from "@/modules/clients/server/actions";
 import {

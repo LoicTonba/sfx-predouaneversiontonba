@@ -52,33 +52,34 @@ model TCodesEtapes {
 }
 
 model TColisageDossiers {
-  ID_Colisage_Dossier   Int                      @id(map: "TColisageDossiers$PrimaryKey") @unique(map: "IX_TColisageDossiers") @default(autoincrement()) @map("ID Colisage Dossier")
-  Dossier               Int
-  HS_Code               Int?                     @map("HS Code")
-  Description_Colis     String                   @map("Description Colis")
-  No_Commande           String?                  @map("No Commande") @db.NVarChar(50)
-  Nom_Fournisseur       String?                  @map("Nom Fournisseur") @db.NVarChar(200)
-  No_Facture            String?                  @map("No Facture") @db.NVarChar(50)
-  Devise                Int
-  Qte_Colis             Decimal                  @default(1, map: "DF__TColisage__Qte C__123EB7A3") @map("Qte Colis") @db.Decimal(24, 6)
-  Prix_Unitaire_Facture Decimal                  @default(0, map: "DF__TColisage__Prix __1332DBDC") @map("Prix Unitaire Facture") @db.Decimal(24, 6)
-  Poids_Brut            Decimal                  @default(0, map: "DF__TColisage__Poids__14270015") @map("Poids Brut") @db.Decimal(24, 6)
-  Poids_Net             Decimal                  @default(0, map: "DF__TColisage__Poids__151B244E") @map("Poids Net") @db.Decimal(24, 6)
-  Volume                Decimal                  @default(0, map: "DF__TColisage__Volum__160F4887") @db.Decimal(24, 6)
-  Pays_Origine          Int                      @map("Pays Origine")
-  Regime_Declaration    Int?                     @map("Regime Declaration")
-  Regroupement_Client   String                   @default("", map: "DF__TColisage__Regro__17036CC0") @map("Regroupement Client") @db.NVarChar(200)
-  UploadKey             String                   @default("N'", map: "DF_TColisageDossiers_UploadKey") @db.NVarChar(50)
-  Session               Int                      @default(0, map: "DF__TColisage__Sessi__17F790F9")
-  Date_Creation         DateTime                 @default(now(), map: "DF__TColisage__Date __18EBB532") @map("Date Creation")
-  RowVer                Bytes?  @map("RowVer")
-  Item_No               String                   @default("N'", map: "DF_TColisageDossiers_Item_No") @map("Item No") @db.NVarChar(50)
-  TDevises              TDevises                 @relation(fields: [Devise], references: [ID_Devise], map: "FK_TColisageDossiers_TDevises")
-  TDossiers             TDossiers                @relation(fields: [Dossier], references: [ID_Dossier], map: "FK_TColisageDossiers_TDossiers")
-  THSCodes              THSCodes?                @relation(fields: [HS_Code], references: [ID_HS_Code], onDelete: NoAction, map: "FK_TColisageDossiers_THSCodes")
-  TPays                 TPays                    @relation(fields: [Pays_Origine], references: [ID_Pays], map: "FK_TColisageDossiers_TPays")
-  TRegimesDeclarations  TRegimesDeclarations?    @relation(fields: [Regime_Declaration], references: [ID_Regime_Declaration], onDelete: NoAction, map: "FK_TColisageDossiers_TRegimesDeclarations")
-  TNotesDetail          TNotesDetail[]
+  ID_Colisage_Dossier  Int                      @id(map: "TColisageDossiers$PrimaryKey") @unique(map: "IX_TColisageDossiers") @default(autoincrement()) @map("ID Colisage Dossier")
+  Dossier              Int
+  HS_Code              Int?                     @map("HS Code")
+  Description_Colis    String                   @map("Description Colis")
+  No_Commande          String                   @map("No Commande") @db.NVarChar(50)
+  Nom_Fournisseur      String                   @map("Nom Fournisseur") @db.NVarChar(200)
+  No_Facture           String                   @map("No Facture") @db.NVarChar(50)
+  Devise               Int
+  Qte_Colis            Decimal                  @default(1, map: "DF__TColisage__Qte C__123EB7A3") @map("Qte Colis") @db.Decimal(24, 6)
+  Prix_Unitaire_Colis  Decimal                  @default(0, map: "DF__TColisage__Prix __1332DBDC") @map("Prix Unitaire Colis") @db.Decimal(24, 6)
+  Poids_Brut           Decimal                  @default(0, map: "DF__TColisage__Poids__14270015") @map("Poids Brut") @db.Decimal(24, 6)
+  Poids_Net            Decimal                  @default(0, map: "DF__TColisage__Poids__151B244E") @map("Poids Net") @db.Decimal(24, 6)
+  Volume               Decimal                  @default(0, map: "DF__TColisage__Volum__160F4887") @db.Decimal(24, 6)
+  Pays_Origine         Int                      @map("Pays Origine")
+  Regime_Declaration   Int?                     @map("Regime Declaration")
+  Regroupement_Client  String                   @default("", map: "DF__TColisage__Regro__17036CC0") @map("Regroupement Client") @db.NVarChar(200)
+  UploadKey            String                   @default("N'", map: "DF_TColisageDossiers_UploadKey") @db.NVarChar(50)
+  Session              Int                      @default(0, map: "DF__TColisage__Sessi__17F790F9")
+  Date_Creation        DateTime                 @default(now(), map: "DF__TColisage__Date __18EBB532") @map("Date Creation")
+  RowVer               Bytes?  @map("RowVer")
+  Item_No              String                   @default("N'", map: "DF_TColisageDossiers_Item_No") @map("Item No") @db.NVarChar(50)
+  Ajustement_Valeur    Decimal                  @default(0, map: "DF_TColisageDossiers_AjustementValeur") @map("Ajustement Valeur") @db.Decimal(24, 6)
+  TDevises             TDevises                 @relation(fields: [Devise], references: [ID_Devise], map: "FK_TColisageDossiers_TDevises")
+  TDossiers            TDossiers                @relation(fields: [Dossier], references: [ID_Dossier], map: "FK_TColisageDossiers_TDossiers")
+  THSCodes             THSCodes?                @relation(fields: [HS_Code], references: [ID_HS_Code], onDelete: NoAction, map: "FK_TColisageDossiers_THSCodes")
+  TPays                TPays                    @relation(fields: [Pays_Origine], references: [ID_Pays], map: "FK_TColisageDossiers_TPays")
+  TRegimesDeclarations TRegimesDeclarations?    @relation(fields: [Regime_Declaration], references: [ID_Regime_Declaration], onDelete: NoAction, map: "FK_TColisageDossiers_TRegimesDeclarations")
+  TNotesDetail         TNotesDetail[]
 }
 
 model TConvertions {
@@ -116,10 +117,6 @@ model TDossiers {
   Description_Dossier    String                   @default("N'", map: "DF_TDossiers_Description Dossier") @map("Description Dossier")
   No_OT                  String                   @default("", map: "DF_TDossiers_No OT") @map("No OT") @db.NVarChar(100)
   No_Dossier             String                   @default("", map: "DF_TDossiers_No Dossier") @map("No Dossier") @db.NVarChar(50)
-  Qte_Colis_OT           Decimal                  @default(1, map: "DF__TDossiers__Qte C__5EBF139D") @map("Qte Colis OT") @db.Decimal(24, 6)
-  Poids_Brut_OT          Decimal                  @default(0, map: "DF__TDossiers__Poids__5FB337D6") @map("Poids Brut OT") @db.Decimal(24, 6)
-  Poids_Net_OT           Decimal                  @default(0, map: "DF__TDossiers__Poids__60A75C0F") @map("Poids Net OT") @db.Decimal(24, 6)
-  Volume_OT              Decimal                  @default(0, map: "DF__TDossiers__Volum__619B8048") @map("Volume OT") @db.Decimal(24, 6)
   Poids_Brut_Pesee       Decimal                  @default(0, map: "DF__TDossiers__Poids__628FA481") @map("Poids Brut Pesee") @db.Decimal(24, 6)
   Poids_Net_Pesee        Decimal                  @default(0, map: "DF__TDossiers__Poids__6383C8BA") @map("Poids Net Pesee") @db.Decimal(24, 6)
   Volume_Pesee           Decimal                  @default(0, map: "DF__TDossiers__Volum__6477ECF3") @map("Volume Pesee") @db.Decimal(24, 6)
@@ -131,6 +128,7 @@ model TDossiers {
   Session                Int                      @default(0, map: "DF__TDossiers__Sessi__66603565")
   Date_Creation          DateTime                 @default(now(), map: "DF__TDossiers__Date __6754599E") @map("Date Creation")
   RowVer                 Bytes?  @map("RowVer")
+  Nbre_Paquetage_Pesee   Int                      @default(0, map: "DF_TDossiers_NbrePaquetagePesee") @map("Nbre Paquetage Pesee")
   TColisageDossiers      TColisageDossiers[]
   TBranches              TBranches                @relation(fields: [Branche], references: [ID_Branche], map: "FK_TDossiers_TBranches")
   TClients               TClients                 @relation(fields: [Client], references: [ID_Client], map: "FK_TDossiers_TClients")
@@ -205,18 +203,18 @@ model TModesTransport {
 }
 
 model TNotesDetail {
-  ID_Note_Detail     Int                      @id(map: "TNotesDetail$PrimaryKey") @default(autoincrement()) @map("ID Note Detail")
-  Colisage_Dossier   Int                      @map("Colisage Dossier")
-  Regime             String                   @default("N'", map: "DF_TNotesDetail_Regime") @db.NVarChar(2)
-  Base_Qte           Decimal                  @default(1, map: "DF__TNotesDet__Base __1CBC4616") @map("Base Qte") @db.Decimal(24, 6)
-  Base_Prix_Unitaire Decimal                  @default(0, map: "DF__TNotesDet__Base __1DB06A4F") @map("Base Prix Unitaire") @db.Decimal(24, 6)
-  Base_Poids_Brut    Decimal                  @default(0, map: "DF__TNotesDet__Base __1EA48E88") @map("Base Poids Brut") @db.Decimal(24, 6)
-  Base_Poids_Net     Decimal                  @default(0, map: "DF__TNotesDet__Base __1F98B2C1") @map("Base Poids Net") @db.Decimal(24, 6)
-  Base_Volume        Decimal                  @default(0, map: "DF__TNotesDet__Base __208CD6FA") @map("Base Volume") @db.Decimal(24, 6)
-  Session            Int                      @default(0, map: "DF__TNotesDet__Sessi__2180FB33")
-  Date_Creation      DateTime                 @default(now(), map: "DF__TNotesDet__Date __22751F6C") @map("Date Creation")
-  RowVer             Bytes?  @map("RowVer")
-  TColisageDossiers  TColisageDossiers        @relation(fields: [Colisage_Dossier], references: [ID_Colisage_Dossier], map: "FK_TNotesDetail_TColisageDossiers")
+  ID_Note_Detail    Int                      @id(map: "TNotesDetail$PrimaryKey") @default(autoincrement()) @map("ID Note Detail")
+  Colisage_Dossier  Int                      @map("Colisage Dossier")
+  Regime            String                   @default("N'", map: "DF_TNotesDetail_Regime") @db.NVarChar(2)
+  Base_Poids_Brut   Decimal                  @default(0, map: "DF__TNotesDet__Base __1EA48E88") @map("Base Poids Brut") @db.Decimal(24, 6)
+  Base_Poids_Net    Decimal                  @default(0, map: "DF__TNotesDet__Base __1F98B2C1") @map("Base Poids Net") @db.Decimal(24, 6)
+  Base_Volume       Decimal                  @default(0, map: "DF__TNotesDet__Base __208CD6FA") @map("Base Volume") @db.Decimal(24, 6)
+  Session           Int                      @default(0, map: "DF__TNotesDet__Sessi__2180FB33")
+  Date_Creation     DateTime                 @default(now(), map: "DF__TNotesDet__Date __22751F6C") @map("Date Creation")
+  RowVer            Bytes?  @map("RowVer")
+  Nbre_Paquetage    Decimal?                 @map("Nbre Paquetage") @db.Decimal(24, 6)
+  Valeur            Decimal?                 @db.Decimal(24, 6)
+  TColisageDossiers TColisageDossiers        @relation(fields: [Colisage_Dossier], references: [ID_Colisage_Dossier], map: "FK_TNotesDetail_TColisageDossiers")
 }
 
 model TPays {
@@ -379,30 +377,20 @@ model TUtilisateurs {
 }
 
 view VNotesDetail {
-  ID_Note_Detail             Int
-  ID_Colisage_Dossier        Int
   ID_Dossier                 Int
   HS_Code                    String?  @db.NVarChar(50)
-  Description_Colis          String
-  No_Commande                String?  @db.NVarChar(50)
-  Nom_Fournisseur            String?  @db.NVarChar(200)
-  No_Facture                 String?  @db.NVarChar(50)
-  Code_Devise                String   @db.NVarChar(5)
   Pays_Origine               String   @db.NVarChar(200)
   ID_Regime_Declaration      Int?
   ID_Regime_Douanier         Int?
   Libelle_Regime_Douanier    String?  @db.NVarChar(200)
   Libelle_Regime_Declaration String?  @db.NVarChar(200)
-  Item_No                    String   @db.NVarChar(50)
-  Regroupement_Client        String   @db.NVarChar(200)
   Regime                     String   @db.NVarChar(2)
-  Base_Qte                   Decimal  @db.Decimal(24, 6)
-  Base_PU                    Decimal  @db.Decimal(24, 6)
-  Base_Poids_Brut            Decimal  @db.Decimal(24, 6)
-  Base_Poids_Net             Decimal  @db.Decimal(24, 6)
-  Base_Volume                Decimal  @db.Decimal(24, 6)
-  Date_Creation              DateTime
-  Nom_Creation               String?  @db.NVarChar(200)
+  Regroupement_Client        String   @db.NVarChar(200)
+  Nbre_Paquetage             Decimal? @db.Decimal(38, 6)
+  Valeur                     Decimal? @db.Decimal(38, 6)
+  Base_Poids_Brut            Decimal? @db.Decimal(38, 6)
+  Base_Poids_Net             Decimal? @db.Decimal(38, 6)
+  Base_Volume                Decimal? @db.Decimal(38, 6)
 }
 
 view VUtilisateurs {
@@ -531,10 +519,7 @@ view VDossiers {
   Description_Dossier       String
   No_OT                     String    @db.NVarChar(100)
   No_Dossier                String    @db.NVarChar(50)
-  Qte_Colis_OT              Decimal   @db.Decimal(24, 6)
-  Poids_Brut_OT             Decimal   @db.Decimal(24, 6)
-  Poids_Net_OT              Decimal   @db.Decimal(24, 6)
-  Volume_OT                 Decimal   @db.Decimal(24, 6)
+  Nbre_Paquetage_Pesee      Int
   Poids_Brut_Pesee          Decimal   @db.Decimal(24, 6)
   Poids_Net_Pesee           Decimal   @db.Decimal(24, 6)
   Volume_Pesee              Decimal   @db.Decimal(24, 6)
@@ -685,13 +670,13 @@ view VColisageDossiers {
   ID_Dossier                 Int
   HS_Code                    String?  @db.NVarChar(50)
   Description_Colis          String
-  No_Commande                String?  @db.NVarChar(50)
-  Nom_Fournisseur            String?  @db.NVarChar(200)
-  No_Facture                 String?  @db.NVarChar(50)
+  No_Commande                String   @db.NVarChar(50)
+  Nom_Fournisseur            String   @db.NVarChar(200)
+  No_Facture                 String   @db.NVarChar(50)
   Item_No                    String   @db.NVarChar(50)
   Code_Devise                String   @db.NVarChar(5)
   Qte_Colis                  Decimal  @db.Decimal(24, 6)
-  Prix_Unitaire_Facture      Decimal  @db.Decimal(24, 6)
+  Prix_Unitaire_Colis        Decimal  @db.Decimal(24, 6)
   Poids_Brut                 Decimal  @db.Decimal(24, 6)
   Poids_Net                  Decimal  @db.Decimal(24, 6)
   Volume                     Decimal  @db.Decimal(24, 6)

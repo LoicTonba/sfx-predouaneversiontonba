@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
-import { auth } from "@/lib/auth";
+import auth from "@/lib/auth";
 import { ClientsWithRegimesView } from "@/modules/clients/ui/views/clients-with-regimes-view";
 import { LoadingState } from "@/components/loading-state";
 

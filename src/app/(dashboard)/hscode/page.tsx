@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
-import { auth } from "@/lib/auth";
+import auth from "@/lib/auth";
 import { getAllHSCodes } from "@/modules/hscode/server/actions";
 import { HscodeErrorView, HscodeLoadingView, HscodeView } from "@/modules/hscode/ui/views/hscode-view";
 import { HscodeListHeader } from "@/modules/hscode/ui/components/hscode-list-header";
