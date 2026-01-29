@@ -110,7 +110,6 @@ export async function genererNotesDetail(dossierId: number, dateDeclaration: Dat
          * ------------------------------------------------------------------ */
         const session = await getSession();
         if (!session.user) {
-            console.log('❌ [genererNotesDetail] Non authentifié');
             return { success: false, error: "Non authentifié" };
         }
 
@@ -207,17 +206,17 @@ export async function genererNotesDetail(dossierId: number, dateDeclaration: Dat
          /* --------------------------------------------------------------------
          * 7️⃣ VÉRIFICATION DES TAUX DE CHANGE
          * ------------------------------------------------------------------ */
-        const devisesUtilisees = await prisma.$queryRaw<any[]>`
-            SELECT DISTINCT 
-                cd.[Devise] as ID_Devise,
-                d.[Code Devise] as Code_Devise,
-                d.[Libelle Devise] as Libelle_Devise
+        const devisesUtilisees = await prisma.$queryRaw<
+            { ID_Devise: number; Code_Devise: string; Libelle_Devise: string }[]
+        >`
+            SELECT DISTINCT
+                cd.[Devise]       AS ID_Devise,
+                d.[Code Devise]   AS Code_Devise,
+                d.[Libelle Devise] AS Libelle_Devise
             FROM TColisageDossiers cd
             INNER JOIN TDevises d ON cd.[Devise] = d.[ID Devise]
             WHERE cd.[Dossier] = ${dossierId}
         `;
-        console.log('   Devises utilisées:', devisesUtilisees.map(d => d.Code_Devise).join(', '));
-
         // Vérifier les taux de change pour chaque devise
         const tauxManquants: any[] = [];
         for (const devise of devisesUtilisees) {
@@ -228,13 +227,7 @@ export async function genererNotesDetail(dossierId: number, dateDeclaration: Dat
                     AND [Devise] = ${devise.ID_Devise}
             `;
             
-            if (taux.length === 0) {
-                console.log(`   Taux manquant pour devise:`, {
-                    ID_Devise: devise.ID_Devise,
-                    Code_Devise: devise.Code_Devise,
-                    Libelle_Devise: devise.Libelle_Devise
-                });
-                
+            if (taux.length === 0) {  
                 tauxManquants.push({
                     deviseId: devise.ID_Devise,
                     Code_Devise: devise.Code_Devise,
@@ -244,7 +237,6 @@ export async function genererNotesDetail(dossierId: number, dateDeclaration: Dat
         }
 
         if (tauxManquants.length > 0) {
-            console.log('❌ [genererNotesDetail] Taux manquants:', tauxManquants.map(t => t.codeDevise).join(', '));
             return {
                 success: false,
                 error: "MISSING_EXCHANGE_RATES",
@@ -253,71 +245,19 @@ export async function genererNotesDetail(dossierId: number, dateDeclaration: Dat
                 dateConvertion: dateConversionExacte,
             };
         }
-        
-        try {
-            // Utiliser la date EXACTE de la conversion (avec l'heure exacte de la BD)
-            let dateFormatted: string;
-            if (dateConversionExacte instanceof Date) {
-                // Formater pour SQL Server datetime: 'YYYY-MM-DD HH:MM:SS' (sans millisecondes ni Z)
-                const isoString = dateConversionExacte.toISOString();
-                dateFormatted = isoString.replace('T', ' ').replace('.000Z', '');
-            } else {
-                // Si c'est une string, essayer de la parser et la reformatter
-                const parsedDate = new Date(dateConversionExacte);
-                if (!isNaN(parsedDate.getTime())) {
-                    const isoString = parsedDate.toISOString();
-                    dateFormatted = isoString.replace('T', ' ').replace('.000Z', '');
-                } else {
-                    dateFormatted = dateConversionExacte.toString();
-                }
-            }
-            
-            console.log('   Date formatée SQL (EXACTE de la BD):', dateFormatted);
-            
-            // Utiliser CAST pour forcer la conversion explicite en datetime
-            const query = `EXEC [dbo].[pSP_CreerNoteDetail] @Id_Dossier = ${dossierId}, @DateDeclaration = CAST('${dateFormatted}' AS datetime)`;
-            console.log('   Query:', query);
-            
-            await prisma.$executeRawUnsafe(query);
-            
-            console.log('✅ [genererNotesDetail] Procédure exécutée avec succès');
-        } catch (procError: any) {
-            console.error('ERREUR PROCEDURE:', procError);
-            console.error('Message:', procError.message);
-            console.error('Code:', procError.code);
-            
-            // Extraire le message d'erreur SQL Server
-            let errorMsg = procError.message || 'Erreur inconnue';
-            if (errorMsg.includes('FILE IS NOT IN PROGRESS')) {
-                errorMsg = 'Le dossier doit être en cours (statut = 0)';
-            } else if (errorMsg.includes('MISSING OR WRONG EXCHANGE RATE')) {
-                errorMsg = 'Taux de change manquant ou incorrect';
-            } else if (errorMsg.includes('MISSING PACKING LIST')) {
-                errorMsg = 'Aucun colisage trouvé';
-            } else if (errorMsg.includes('MISSING HS CODE OR REGIME')) {
-                errorMsg = 'HS Code ou régime manquant sur certains colisages';
-            }
-            
-            return { success: false, error: errorMsg };
-        }
-        
-        // Vérifier le statut après
-        console.log('📝 [genererNotesDetail] Étape 8: Vérification résultat');
-        const dossierApres = await prisma.tDossiers.findUnique({
-            where: { ID_Dossier: dossierId },
-            select: { Statut_Dossier: true }
-        });
-        console.log('   Statut après:', dossierApres?.Statut_Dossier);
-        
-        // Compter les notes créées
-        const notesCount = await prisma.$queryRawUnsafe(`
-            SELECT COUNT(*) as total FROM TNotesDetail WHERE [Colisage Dossier] IN (
-                SELECT [ID Colisage Dossier] FROM TColisageDossiers WHERE [Dossier] = ${dossierId}
-            )
-        `);
-        // console.log('   Notes créées:', notesCount[0].total);
-        console.log('✅ [genererNotesDetail] FIN - SUCCESS');
 
+         /* --------------------------------------------------------------------
+         * 8️⃣ APPEL PROCÉDURE STOCKÉE (PRISMA-SAFE)
+         * ------------------------------------------------------------------ */
+        await prisma.$executeRaw`
+            EXEC dbo.pSP_CreerNoteDetail
+                @Id_Dossier      = ${dossierId},
+                @DateDeclaration = ${dateConversionExacte}
+        `;
+        
+        /* --------------------------------------------------------------------
+         * 9️⃣ INVALIDATION DU CACHE
+         * ------------------------------------------------------------------ */
         revalidatePath(`/dossiers/${dossierId}`);
         return { success: true };
     } catch (error: any) {
