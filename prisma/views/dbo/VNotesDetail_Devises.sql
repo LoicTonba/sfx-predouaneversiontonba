@@ -8,6 +8,21 @@ SELECT
   B.[Libelle_Regime_Declaration],
   A.[Regime] AS [Regime],
   B.[Regroupement_Client],
+  B.Code_Devise,
+  SUM(
+    CASE
+      WHEN B.[Ratio_DC] IN (0, 1) THEN B.[Valeur_Colis]
+      WHEN A.[Regime] = 'DC' THEN B.[Valeur_Colis] * B.[Ratio_DC]
+      WHEN A.[Regime] = 'TR' THEN B.[Valeur_Colis] * B.[Ratio_TR]
+    END
+  ) AS [Valeur_Devise],
+  SUM(
+    CASE
+      WHEN B.[Ratio_DC] IN (0, 1) THEN B.[Ajustement_Valeur]
+      WHEN A.[Regime] = 'DC' THEN B.[Ajustement_Valeur] * B.[Ratio_DC]
+      WHEN A.[Regime] = 'TR' THEN B.[Ajustement_Valeur] * B.[Ratio_TR]
+    END
+  ) AS [Ajustement_Devise],
   SUM(A.[Nbre Paquetage]) AS [Nbre_Paquetage],
   SUM(A.[Valeur]) AS [Valeur],
   SUM(A.[Base Poids Brut]) AS [Base_Poids_Brut],
@@ -25,4 +40,5 @@ GROUP BY
   B.[Libelle_Regime_Douanier],
   B.[Libelle_Regime_Declaration],
   A.[Regime],
-  B.[Regroupement_Client];
+  B.[Regroupement_Client],
+  B.Code_Devise;

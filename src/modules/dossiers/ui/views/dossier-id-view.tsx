@@ -256,9 +256,8 @@ export const DossierIdView = ({ dossierId, dossier }: Props) => {
                                             Gérez les colisages de ce dossier
                                         </p>
                                         {/* <ColisageImportForDossier dossierId={dossier.ID_Dossier} /> */}
-                                    
-                                    </div>
                                     <ColisageImportDialog dossierId={dossier.ID_Dossier} />
+                                    </div>
                                     <ColisageHeaderForDossier dosierId={dossier.ID_Dossier} />
                                     <ColisageListForDossier dossierId={dossier.ID_Dossier} />
                                 </div>

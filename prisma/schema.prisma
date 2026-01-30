@@ -16,7 +16,7 @@ model TBranches {
   Entite        Int                      @default(0, map: "DF_TBranches_Entite")
   Session       Int                      @default(0, map: "DF__TBranches__Sessi__382F5661")
   Date_Creation DateTime                 @default(now(), map: "DF__TBranches__Date __39237A9A") @map("Date Creation")
-  RowVer        Bytes?  @map("RowVer")
+  RowVer        Bytes?   @map("RowVer")
   TEntites      TEntites                 @relation(fields: [Entite], references: [ID_Entite], onUpdate: NoAction, map: "FK_TBranches_TEntites")
   TDossiers     TDossiers[]
 }
@@ -27,7 +27,7 @@ model TClients {
   Entite          Int                      @default(0, map: "DF_TClients_Entite")
   Session         Int                      @default(0, map: "DF__TClients__Sessio__47DBAE45")
   Date_Creation   DateTime                 @default(now(), map: "DF__TClients__Date C__48CFD27E") @map("Date Creation")
-  RowVer          Bytes?  @map("RowVer")
+  RowVer          Bytes?   @map("RowVer")
   TEntites        TEntites                 @relation(fields: [Entite], references: [ID_Entite], onUpdate: NoAction, map: "FK_TClients_TEntites")
   TDossiers       TDossiers[]
   TRegimesClients TRegimesClients[]
@@ -45,41 +45,43 @@ model TCodesEtapes {
   Entite          Int                      @default(0, map: "DF_TCodesEtapes_Entite")
   Session         Int                      @default(0, map: "DF__TCodesEta__Sessi__2A164134")
   Date_Creation   DateTime                 @default(now(), map: "DF__TCodesEta__Date __2B0A656D") @map("Date Creation")
-  RowVer          Bytes?  @map("RowVer")
+  RowVer          Bytes?   @map("RowVer")
   TEtapesDossiers TEtapesDossiers[]
 
   @@unique([Libelle_Etape, Entite], map: "UQ_TCodesEtapes$Libelle Etape")
 }
 
 model TColisageDossiers {
-  ID_Colisage_Dossier  Int                      @id(map: "TColisageDossiers$PrimaryKey") @unique(map: "IX_TColisageDossiers") @default(autoincrement()) @map("ID Colisage Dossier")
+  ID_Colisage_Dossier  Int                      @id(map: "TColisageDossiers$PrimaryKey") @default(autoincrement()) @map("ID Colisage Dossier")
   Dossier              Int
   HS_Code              Int?                     @map("HS Code")
   Description_Colis    String                   @map("Description Colis")
-  No_Commande          String                   @map("No Commande") @db.NVarChar(50)
-  Nom_Fournisseur      String                   @map("Nom Fournisseur") @db.NVarChar(200)
-  No_Facture           String                   @map("No Facture") @db.NVarChar(50)
+  No_Commande          String                   @default("N'", map: "DF_TColisageDossiers_No Commande") @map("No Commande") @db.NVarChar(50)
+  Nom_Fournisseur      String                   @default("N'", map: "DF_TColisageDossiers_Nom Fournisseur") @map("Nom Fournisseur") @db.NVarChar(200)
+  No_Facture           String                   @default("N'", map: "DF_TColisageDossiers_No Facture") @map("No Facture") @db.NVarChar(50)
+  Item_No              String                   @default("N'", map: "DF_TColisageDossiers_Item_No") @map("Item No") @db.NVarChar(50)
   Devise               Int
   Qte_Colis            Decimal                  @default(1, map: "DF__TColisage__Qte C__123EB7A3") @map("Qte Colis") @db.Decimal(24, 6)
   Prix_Unitaire_Colis  Decimal                  @default(0, map: "DF__TColisage__Prix __1332DBDC") @map("Prix Unitaire Colis") @db.Decimal(24, 6)
   Poids_Brut           Decimal                  @default(0, map: "DF__TColisage__Poids__14270015") @map("Poids Brut") @db.Decimal(24, 6)
   Poids_Net            Decimal                  @default(0, map: "DF__TColisage__Poids__151B244E") @map("Poids Net") @db.Decimal(24, 6)
   Volume               Decimal                  @default(0, map: "DF__TColisage__Volum__160F4887") @db.Decimal(24, 6)
+  Ajustement_Valeur    Decimal                  @default(0, map: "DF_TColisageDossiers_Ajustement Valeur") @map("Ajustement Valeur") @db.Decimal(24, 6)
   Pays_Origine         Int                      @map("Pays Origine")
   Regime_Declaration   Int?                     @map("Regime Declaration")
   Regroupement_Client  String                   @default("", map: "DF__TColisage__Regro__17036CC0") @map("Regroupement Client") @db.NVarChar(200)
   UploadKey            String                   @default("N'", map: "DF_TColisageDossiers_UploadKey") @db.NVarChar(50)
   Session              Int                      @default(0, map: "DF__TColisage__Sessi__17F790F9")
   Date_Creation        DateTime                 @default(now(), map: "DF__TColisage__Date __18EBB532") @map("Date Creation")
-  RowVer               Bytes?  @map("RowVer")
-  Item_No              String                   @default("N'", map: "DF_TColisageDossiers_Item_No") @map("Item No") @db.NVarChar(50)
-  Ajustement_Valeur    Decimal                  @default(0, map: "DF_TColisageDossiers_AjustementValeur") @map("Ajustement Valeur") @db.Decimal(24, 6)
+  RowVer               Bytes?   @map("RowVer")
   TDevises             TDevises                 @relation(fields: [Devise], references: [ID_Devise], map: "FK_TColisageDossiers_TDevises")
   TDossiers            TDossiers                @relation(fields: [Dossier], references: [ID_Dossier], map: "FK_TColisageDossiers_TDossiers")
   THSCodes             THSCodes?                @relation(fields: [HS_Code], references: [ID_HS_Code], onDelete: NoAction, map: "FK_TColisageDossiers_THSCodes")
   TPays                TPays                    @relation(fields: [Pays_Origine], references: [ID_Pays], map: "FK_TColisageDossiers_TPays")
   TRegimesDeclarations TRegimesDeclarations?    @relation(fields: [Regime_Declaration], references: [ID_Regime_Declaration], onDelete: NoAction, map: "FK_TColisageDossiers_TRegimesDeclarations")
   TNotesDetail         TNotesDetail[]
+
+  @@unique([No_Facture, Nom_Fournisseur, Item_No, No_Commande], map: "UN_TColisageDossiers")
 }
 
 model TConvertions {
@@ -88,7 +90,7 @@ model TConvertions {
   Entite          Int                      @default(0, map: "DF_TConvertions_Entite")
   Session         Int                      @default(0, map: "DF__TConverti__Sessi__76969D2E")
   Date_Creation   DateTime                 @default(now(), map: "DF__TConverti__Date __778AC167") @map("Date Creation")
-  RowVer          Bytes?  @map("RowVer")
+  RowVer          Bytes?   @map("RowVer")
   TDossiers       TDossiers[]
   TTauxChange     TTauxChange[]
 
@@ -103,7 +105,7 @@ model TDevises {
   Devise_Inactive   Boolean                  @default(true, map: "DF_TDevises_Devise Inactive") @map("Devise Inactive")
   Session           Int                      @default(0, map: "DF__TDevises__Sessio__71D1E811")
   Date_Creation     DateTime                 @default(now(), map: "DF__TDevises__Date C__72C60C4A") @map("Date Creation")
-  RowVer            Bytes?  @map("RowVer")
+  RowVer            Bytes?   @map("RowVer")
   TColisageDossiers TColisageDossiers[]
   TPays             TPays[]
   TTauxChange       TTauxChange[]
@@ -117,18 +119,18 @@ model TDossiers {
   Description_Dossier    String                   @default("N'", map: "DF_TDossiers_Description Dossier") @map("Description Dossier")
   No_OT                  String                   @default("", map: "DF_TDossiers_No OT") @map("No OT") @db.NVarChar(100)
   No_Dossier             String                   @default("", map: "DF_TDossiers_No Dossier") @map("No Dossier") @db.NVarChar(50)
-  Poids_Brut_Pesee       Decimal                  @default(0, map: "DF__TDossiers__Poids__628FA481") @map("Poids Brut Pesee") @db.Decimal(24, 6)
-  Poids_Net_Pesee        Decimal                  @default(0, map: "DF__TDossiers__Poids__6383C8BA") @map("Poids Net Pesee") @db.Decimal(24, 6)
-  Volume_Pesee           Decimal                  @default(0, map: "DF__TDossiers__Volum__6477ECF3") @map("Volume Pesee") @db.Decimal(24, 6)
-  Responsable_Dossier    Int                      @map("Responsable Dossier")
+  Nbre_Paquetage_Pesee   Int                      @default(0, map: "DF_TDossiers_Nbre Paquetage") @map("Nbre Paquetage Pesee")
+  Poids_Brut_Pesee       Decimal                  @default(0, map: "DF__TDossiers__Poids__628FA481") @map("Poids Brut Pesee") @db.Decimal(24, 2)
+  Poids_Net_Pesee        Decimal                  @default(0, map: "DF__TDossiers__Poids__6383C8BA") @map("Poids Net Pesee") @db.Decimal(24, 2)
+  Volume_Pesee           Decimal                  @default(0, map: "DF__TDossiers__Volum__6477ECF3") @map("Volume Pesee") @db.Decimal(24, 2)
+  Responsable_Dossier    Int                      @default(0, map: "DF_TDossiers_Responsable Dossier") @map("Responsable Dossier")
   Convertion             Int?
   Derniere_Etape_Dossier Int?                     @map("Derniere Etape Dossier")
   Observation_Dossier    String?                  @map("Observation Dossier")
   Statut_Dossier         Int                      @default(0, map: "DF__TDossiers__Statu__656C112C") @map("Statut Dossier")
   Session                Int                      @default(0, map: "DF__TDossiers__Sessi__66603565")
   Date_Creation          DateTime                 @default(now(), map: "DF__TDossiers__Date __6754599E") @map("Date Creation")
-  RowVer                 Bytes?  @map("RowVer")
-  Nbre_Paquetage_Pesee   Int                      @default(0, map: "DF_TDossiers_NbrePaquetagePesee") @map("Nbre Paquetage Pesee")
+  RowVer                 Bytes?   @map("RowVer")
   TColisageDossiers      TColisageDossiers[]
   TBranches              TBranches                @relation(fields: [Branche], references: [ID_Branche], map: "FK_TDossiers_TBranches")
   TClients               TClients                 @relation(fields: [Client], references: [ID_Client], map: "FK_TDossiers_TClients")
@@ -147,7 +149,7 @@ model TEntites {
   Pays            Int                      @default(0, map: "DF_TEntites_Pays")
   Session         Int                      @default(0, map: "DF__TEntites__Sessio__3DE82FB7")
   Date_Creation   DateTime                 @default(now(), map: "DF__TEntites__Date C__3EDC53F0") @map("Date Creation")
-  RowVer          Bytes?  @map("RowVer")
+  RowVer          Bytes?   @map("RowVer")
   TBranches       TBranches[]
   TClients        TClients[]
   TGroupesEntites TGroupesEntites          @relation(fields: [Groupe_Entite], references: [ID_Groupe_Entite], map: "FK_TEntites_TGroupesEntites")
@@ -165,7 +167,7 @@ model TEtapesDossiers {
   Obs              String?
   Session          Int                      @default(0, map: "DF__TEtapesDo__Sessi__2EDAF651")
   Date_Creation    DateTime                 @default(now(), map: "DF__TEtapesDo__Date __2FCF1A8A") @map("Date Creation")
-  RowVer           Bytes?  @map("RowVer")
+  RowVer           Bytes?   @map("RowVer")
   TCodesEtapes     TCodesEtapes             @relation(fields: [Etape_Dossier], references: [ID_Code_Etape], map: "FK_TEtapesDossiers_TCodesEtapes")
   TDossiers        TDossiers                @relation(fields: [Dossier], references: [ID_Dossier], map: "FK_TEtapesDossiers_TDossiers")
 }
@@ -175,7 +177,7 @@ model TGroupesEntites {
   Nom_Groupe_Entite String                   @unique(map: "UQ_TGroupesEntites$Nom Groupe Entite") @map("Nom Groupe Entite") @db.NVarChar(200)
   Session           Int                      @default(0, map: "DF__TGroupesE__Sessi__09746778")
   Date_Creation     DateTime                 @default(now(), map: "DF__TGroupesE__Date __0A688BB1") @map("Date Creation")
-  RowVer            Bytes?  @map("RowVer")
+  RowVer            Bytes?   @map("RowVer")
   TEntites          TEntites[]
 }
 
@@ -186,8 +188,7 @@ model THSCodes {
   Entite            Int                      @default(0, map: "DF_THSCodes_Entite")
   Session           Int                      @default(0, map: "DF__THSCodes__Sessio__6C190EBB")
   Date_Creation     DateTime                 @default(now(), map: "DF__THSCodes__Date C__6D0D32F4") @map("Date Creation")
-  RowVer            Bytes?  @map("RowVer")
-  UploadKey         String                   @default("MANUAL", map: "DF_THSCodes_UploadKey") @db.NVarChar(50)
+  RowVer            Bytes?   @map("RowVer")
   TColisageDossiers TColisageDossiers[]
 
   @@unique([HS_Code, Entite], map: "UQ_THSCodes$HS Code")
@@ -198,7 +199,7 @@ model TModesTransport {
   Libelle_Mode_Transport String                   @unique(map: "UQ_TModesTransport$Libelle Mode Transport") @map("Libelle Mode Transport") @db.NVarChar(200)
   Session                Int                      @default(0, map: "DF__TModesTra__Sessi__5629CD9C")
   Date_Creation          DateTime                 @default(now(), map: "DF__TModesTra__Date __571DF1D5") @map("Date Creation")
-  RowVer                 Bytes?  @map("RowVer")
+  RowVer                 Bytes?   @map("RowVer")
   TTypesDossiers         TTypesDossiers[]
 }
 
@@ -206,14 +207,14 @@ model TNotesDetail {
   ID_Note_Detail    Int                      @id(map: "TNotesDetail$PrimaryKey") @default(autoincrement()) @map("ID Note Detail")
   Colisage_Dossier  Int                      @map("Colisage Dossier")
   Regime            String                   @default("N'", map: "DF_TNotesDetail_Regime") @db.NVarChar(2)
-  Base_Poids_Brut   Decimal                  @default(0, map: "DF__TNotesDet__Base __1EA48E88") @map("Base Poids Brut") @db.Decimal(24, 6)
-  Base_Poids_Net    Decimal                  @default(0, map: "DF__TNotesDet__Base __1F98B2C1") @map("Base Poids Net") @db.Decimal(24, 6)
-  Base_Volume       Decimal                  @default(0, map: "DF__TNotesDet__Base __208CD6FA") @map("Base Volume") @db.Decimal(24, 6)
+  Nbre_Paquetage    Decimal                  @default(0, map: "DF_TNotesDetail_Nbre Paquetage") @map("Nbre Paquetage") @db.Decimal(24, 2)
+  Valeur            Decimal                  @default(0, map: "DF__TNotesDet__Base __1DB06A4F") @db.Decimal(24, 2)
+  Base_Poids_Brut   Decimal                  @default(0, map: "DF__TNotesDet__Base __1EA48E88") @map("Base Poids Brut") @db.Decimal(24, 2)
+  Base_Poids_Net    Decimal                  @default(0, map: "DF__TNotesDet__Base __1F98B2C1") @map("Base Poids Net") @db.Decimal(24, 2)
+  Base_Volume       Decimal                  @default(0, map: "DF__TNotesDet__Base __208CD6FA") @map("Base Volume") @db.Decimal(24, 2)
   Session           Int                      @default(0, map: "DF__TNotesDet__Sessi__2180FB33")
   Date_Creation     DateTime                 @default(now(), map: "DF__TNotesDet__Date __22751F6C") @map("Date Creation")
-  RowVer            Bytes?  @map("RowVer")
-  Nbre_Paquetage    Decimal?                 @map("Nbre Paquetage") @db.Decimal(24, 6)
-  Valeur            Decimal?                 @db.Decimal(24, 6)
+  RowVer            Bytes?   @map("RowVer")
   TColisageDossiers TColisageDossiers        @relation(fields: [Colisage_Dossier], references: [ID_Colisage_Dossier], map: "FK_TNotesDetail_TColisageDossiers")
 }
 
@@ -224,7 +225,7 @@ model TPays {
   Devise_Locale     Int                      @map("Devise Locale")
   Session           Int                      @default(0, map: "DF__TPays__Session__7F2BE32F")
   Date_Creation     DateTime                 @default(now(), map: "DF__TPays__Date Crea__00200768") @map("Date Creation")
-  RowVer            Bytes?  @map("RowVer")
+  RowVer            Bytes?   @map("RowVer")
   TColisageDossiers TColisageDossiers[]
   TEntites          TEntites[]
   TDevises          TDevises                 @relation(fields: [Devise_Locale], references: [ID_Devise], onUpdate: NoAction, map: "FK_TPays_TDevises")
@@ -235,7 +236,7 @@ model TPermissionsBase {
   Libelle_Permission String                   @unique(map: "UQ_TPermissionsBase$Libelle Permission") @map("Libelle Permission") @db.NVarChar(200)
   Permission_Active  Boolean                  @default(false, map: "DF__TPermissionsBas__Permission __398D8EEE") @map("Permission Active")
   Date_Activation    DateTime?                @default(now(), map: "DF__TPermissionsBas__Date __3A81B327") @map("Date Activation")
-  RowVer             Bytes?  @map("RowVer")
+  RowVer             Bytes?   @map("RowVer")
   TPermissonsRoles   TPermissonsRoles[]
 }
 
@@ -245,7 +246,7 @@ model TPermissonsRoles {
   Permission         Int
   Session            Int                      @default(0, map: "DF_TPermissonsRoles_Session")
   Date_Creation      DateTime                 @default(now(), map: "DF_TPermissonsRoles_Date Creation") @map("Date Creation")
-  RowVer             Bytes?  @map("RowVer")
+  RowVer             Bytes?   @map("RowVer")
   TPermissionsBase   TPermissionsBase         @relation(fields: [Permission], references: [ID_Permission_Base], map: "FK_TPermissonsRoles_TPermissionsBase")
   TRoles             TRoles                   @relation(fields: [Role], references: [ID_Role], map: "FK_TPermissonsRoles_TPermissonsRoles")
 }
@@ -256,7 +257,7 @@ model TRegimesClients {
   Regime_Declaration   Int                      @map("Regime Declaration")
   Session              Int                      @default(0, map: "DF__TRegimesC__Sessi__0E6E26BF")
   Date_Creation        DateTime                 @default(now(), map: "DF__TRegimesC__Date __0F624AF8") @map("Date Creation")
-  RowVer               Bytes?  @map("RowVer")
+  RowVer               Bytes?   @map("RowVer")
   TClients             TClients                 @relation(fields: [Client], references: [ID_Client], map: "FK_TRegimesClients_TClients")
   TRegimesDeclarations TRegimesDeclarations     @relation(fields: [Regime_Declaration], references: [ID_Regime_Declaration], map: "FK_TRegimesClients_TRegimesDeclarations")
 }
@@ -269,7 +270,7 @@ model TRegimesDeclarations {
   Entite                     Int                      @default(0, map: "DF_TRegimesDeclarations_Entite")
   Session                    Int                      @default(0, map: "DF__TRegimesD__Sessi__0A9D95DB")
   Date_Creation              DateTime                 @default(now(), map: "DF__TRegimesD__Date __0B91BA14") @map("Date Creation")
-  RowVer                     Bytes?  @map("RowVer")
+  RowVer                     Bytes?   @map("RowVer")
   TColisageDossiers          TColisageDossiers[]
   TRegimesClients            TRegimesClients[]
   TRegimesDouaniers          TRegimesDouaniers        @relation(fields: [Regime_Douanier], references: [ID_Regime_Douanier], map: "FK_TRegimesDeclarations_TRegimesDouaniers")
@@ -283,7 +284,7 @@ model TRegimesDouaniers {
   Libelle_Regime_Douanier String                   @unique(map: "UQ_TRegimesDouaniers$Libelle Regime Douanier") @map("Libelle Regime Douanier") @db.NVarChar(200)
   Session                 Int                      @default(0, map: "DF__TRegimesD__Sessi__04E4BC85")
   Date_Creation           DateTime                 @default(now(), map: "DF__TRegimesD__Date __05D8E0BE") @map("Date Creation")
-  RowVer                  Bytes?  @map("RowVer")
+  RowVer                  Bytes?   @map("RowVer")
   TRegimesDeclarations    TRegimesDeclarations[]
 }
 
@@ -292,7 +293,7 @@ model TRoles {
   Libelle_Role       String                   @unique(map: "UQ_TRoles$Libelle Role") @map("Libelle Role") @db.NVarChar(200)
   Session            Int                      @default(0, map: "DF_TRoles_Session")
   Date_Creation      DateTime                 @default(now(), map: "DF_TRoles_Date Creation") @map("Date Creation")
-  RowVer             Bytes?  @map("RowVer")
+  RowVer             Bytes?   @map("RowVer")
   TPermissonsRoles   TPermissonsRoles[]
   TRolesUtilisateurs TRolesUtilisateurs[]
 }
@@ -303,7 +304,7 @@ model TRolesUtilisateurs {
   Utilisateur         Int
   Session             Int                      @default(0, map: "DF_TRolesUtilisateurs_Session")
   Date_Creation       DateTime                 @default(now(), map: "DF_TRolesUtilisateurs_Date Creation") @map("Date Creation")
-  RowVer              Bytes?  @map("RowVer")
+  RowVer              Bytes?   @map("RowVer")
   TRoles              TRoles                   @relation(fields: [Role], references: [ID_Role], map: "FK_TRolesUtilisateurs_TRoles")
   TUtilisateurs       TUtilisateurs            @relation(fields: [Utilisateur], references: [ID_Utilisateur], map: "FK_TRolesUtilisateurs_TUtilisateurs")
 }
@@ -313,7 +314,7 @@ model TSensTrafic {
   Libelle_Sens_Trafic String                   @unique(map: "UQ_TSensTrafic$Libelle Sens Trafic") @map("Libelle Sens Trafic") @db.NVarChar(200)
   Session             Int                      @default(0, map: "DF__TSensTraf__Sessi__5165187F")
   Date_Creation       DateTime                 @default(now(), map: "DF__TSensTraf__Date __52593CB8") @map("Date Creation")
-  RowVer              Bytes?  @map("RowVer")
+  RowVer              Bytes?   @map("RowVer")
   TTypesDossiers      TTypesDossiers[]
 }
 
@@ -321,8 +322,8 @@ model TSessions {
   ID_Session    Int                      @id(map: "TSessions$PrimaryKey") @default(autoincrement()) @map("ID Session")
   Utilisateur   Int
   Debut_Session DateTime                 @default(now(), map: "DF__TSessions__Debut__4316F928") @map("Debut Session")
-  Fin_Session   DateTime?                @default(now(), map: "DF__TSessions__Fin S__440B1D61") @map("Fin Session")
-  RowVer        Bytes?  @map("RowVer")
+  Fin_Session   DateTime                 @default(now(), map: "DF__TSessions__Fin S__440B1D61") @map("Fin Session")
+  RowVer        Bytes?   @map("RowVer")
   TUtilisateurs TUtilisateurs            @relation(fields: [Utilisateur], references: [ID_Utilisateur], map: "FK_TSessions_TUtilisateurs")
 }
 
@@ -331,7 +332,7 @@ model TStatutsDossier {
   Libelle_Statut_Dossier String                   @unique(map: "UQ_TStatutsDossier$Libelle Statut Dossier") @map("Libelle Statut Dossier") @db.NVarChar(200)
   Session                Int                      @default(0, map: "DF__TStatutsD__Sessi__4CA06362")
   Date_Creation          DateTime                 @default(now(), map: "DF__TStatutsD__Date __4D94879B") @map("Date Creation")
-  RowVer                 Bytes?  @map("RowVer")
+  RowVer                 Bytes?   @map("RowVer")
   TDossiers              TDossiers[]
 }
 
@@ -342,7 +343,7 @@ model TTauxChange {
   Taux_Change    Decimal                  @map("Taux Change") @db.Decimal(24, 6)
   Session        Int                      @default(0, map: "DF_TTauxChange_Session")
   Date_Creation  DateTime                 @default(now(), map: "DF_TTauxChange_Date Creation") @map("Date Creation")
-  RowVer         Bytes?  @map("RowVer")
+  RowVer         Bytes?   @map("RowVer")
   TConvertions   TConvertions             @relation(fields: [Convertion], references: [ID_Convertion], map: "FK_TTauxChange_TConvertions")
   TDevises       TDevises                 @relation(fields: [Devise], references: [ID_Devise], map: "FK_TTauxChange_TDevises")
 
@@ -357,7 +358,7 @@ model TTypesDossiers {
   Entite               Int                      @default(0, map: "DF_TTypesDossiers_Entite")
   Session              Int                      @default(0, map: "DF__TTypes_Do__Sessi__5AEE82B9")
   Date_Creation        DateTime                 @default(now(), map: "DF__TTypes_Do__Date __5BE2A6F2") @map("Date Creation")
-  RowVer               Bytes?  @map("RowVer")
+  RowVer               Bytes?   @map("RowVer")
   TDossiers            TDossiers[]
   TModesTransport      TModesTransport          @relation(fields: [Mode_Transport], references: [ID_Mode_Transport], map: "FK_TTypes_Dossiers_TModesTransport")
   TSensTrafic          TSensTrafic              @relation(fields: [Sens_Trafic], references: [ID_Sens_Trafic], map: "FK_TTypes_Dossiers_TSensTrafic")
@@ -370,10 +371,172 @@ model TUtilisateurs {
   Entite             Int                      @default(0, map: "DF_TUtilisateurs_Entite")
   Session            Int                      @default(0, map: "DF__TUtilisat__Sessi__3F466844")
   Date_Creation      DateTime                 @default(now(), map: "DF__TUtilisat__Date __403A8C7D") @map("Date Creation")
-  RowVer             Bytes?  @map("RowVer")
+  RowVer             Bytes?   @map("RowVer")
   TDossiers          TDossiers[]
   TRolesUtilisateurs TRolesUtilisateurs[]
   TSessions          TSessions[]
+}
+
+view VPermissonsRoles {
+  ID_Permission_Role Int
+  ID_Role            Int
+  Libelle_Role       String   @db.NVarChar(200)
+  ID_Permission      Int
+  Libelle_Permission String   @db.NVarChar(200)
+  Date_Creation      DateTime
+  Nom_Creation       String?  @db.NVarChar(200)
+}
+
+view VHSCodes {
+  ID_HS_Code      Int
+  HS_Code         String   @db.NVarChar(50)
+  Libelle_HS_Code String   @db.NVarChar(200)
+  ID_Entite       Int
+  Date_Creation   DateTime
+  Nom_Creation    String?  @db.NVarChar(200)
+}
+
+view VRolesUtilisateurs {
+  ID_Role_Utilisateur Int
+  ID_Role             Int
+  Libelle_Role        String   @db.NVarChar(200)
+  ID_Utilisateur      Int
+  Nom_Utilisateur     String   @db.NVarChar(200)
+  Date_Creation       DateTime
+  Nom_Creation        String?  @db.NVarChar(200)
+}
+
+view VModesTransport {
+  ID_Mode_Transport      String   @db.NVarChar(1)
+  Libelle_Mode_Transport String   @db.NVarChar(200)
+  Date_Creation          DateTime
+  Nom_Creation           String?  @db.NVarChar(200)
+}
+
+view VPays {
+  ID_Pays       Int
+  Code_Pays     String   @db.NVarChar(5)
+  Libelle_Pays  String   @db.NVarChar(200)
+  Devise_Locale String   @db.NVarChar(5)
+  Date_Creation DateTime
+  Nom_Creation  String?  @db.NVarChar(200)
+}
+
+view VRegimesDouaniers {
+  ID_Regime_Douanier      Int
+  Libelle_Regime_Douanier String   @db.NVarChar(200)
+  Date_Creation           DateTime
+  Nom_Creation            String?  @db.NVarChar(200)
+}
+
+view VSensTrafic {
+  ID_Sens_Trafic      String   @db.NVarChar(1)
+  Libelle_Sens_Trafic String   @db.NVarChar(200)
+  Date_Creation       DateTime
+  Nom_Creation        String?  @db.NVarChar(200)
+}
+
+view VRoles {
+  ID_Role       Int
+  Libelle_Role  String   @db.NVarChar(200)
+  Date_Creation DateTime
+  Nom_Creation  String?  @db.NVarChar(200)
+}
+
+view VStatutsDossier {
+  ID_Statut_Dossier      Int
+  Libelle_Statut_Dossier String @db.NVarChar(200)
+}
+
+view VRegimesDeclarations {
+  ID_Regime_Declaration      Int
+  ID_Regime_Douanier         Int
+  Libelle_Regime_Douanier    String   @db.NVarChar(200)
+  Libelle_Regime_Declaration String   @db.NVarChar(200)
+  Ratio_DC                   Decimal  @db.Decimal(24, 3)
+  Ratio_TR                   Decimal? @db.Decimal(25, 3)
+  ID_Entite                  Int
+  Date_Creation              DateTime
+  Nom_Creation               String?  @db.NVarChar(200)
+}
+
+view VRegimesClients {
+  ID_Regime_Client           Int
+  ID_Client                  Int
+  Nom_Client                 String   @db.NVarChar(200)
+  ID_Regime_Declaration      Int
+  ID_Regime_Douanier         Int
+  Libelle_Regime_Douanier    String   @db.NVarChar(200)
+  Libelle_Regime_Declaration String   @db.NVarChar(200)
+  Ratio_DC                   Decimal  @db.Decimal(24, 3)
+  Ratio_TR                   Decimal? @db.Decimal(25, 3)
+  Date_Creation              DateTime
+  Nom_Creation               String?  @db.NVarChar(200)
+}
+
+view VColisageDossiers {
+  ID_Colisage_Dossier        Int
+  ID_Dossier                 Int
+  HS_Code                    String?  @db.NVarChar(50)
+  Description_Colis          String
+  No_Commande                String   @db.NVarChar(50)
+  Nom_Fournisseur            String   @db.NVarChar(200)
+  No_Facture                 String   @db.NVarChar(50)
+  Item_No                    String   @db.NVarChar(50)
+  Code_Devise                String   @db.NVarChar(5)
+  Qte_Colis                  Decimal  @db.Decimal(24, 6)
+  Prix_Unitaire_Colis        Decimal  @db.Decimal(24, 6)
+  Valeur_Colis               Decimal? @db.Decimal(38, 6)
+  Ajustement_Valeur          Decimal  @db.Decimal(24, 6)
+  Poids_Brut                 Decimal  @db.Decimal(24, 6)
+  Poids_Net                  Decimal  @db.Decimal(24, 6)
+  Volume                     Decimal  @db.Decimal(24, 6)
+  Pays_Origine               String   @db.NVarChar(200)
+  ID_Regime_Declaration      Int?
+  ID_Regime_Douanier         Int?
+  Libelle_Regime_Douanier    String?  @db.NVarChar(200)
+  Libelle_Regime_Declaration String?  @db.NVarChar(200)
+  Ratio_DC                   Decimal? @db.Decimal(24, 3)
+  Ratio_TR                   Decimal? @db.Decimal(25, 3)
+  Regroupement_Client        String   @db.NVarChar(200)
+  Date_Creation              DateTime
+  Nom_Creation               String?  @db.NVarChar(200)
+}
+
+view VNotesDetail_Devises {
+  ID_Dossier                 Int
+  HS_Code                    String?  @db.NVarChar(50)
+  Pays_Origine               String   @db.NVarChar(200)
+  ID_Regime_Declaration      Int?
+  ID_Regime_Douanier         Int?
+  Libelle_Regime_Douanier    String?  @db.NVarChar(200)
+  Libelle_Regime_Declaration String?  @db.NVarChar(200)
+  Regime                     String   @db.NVarChar(2)
+  Regroupement_Client        String   @db.NVarChar(200)
+  Code_Devise                String   @db.NVarChar(5)
+  Valeur_Devise              Decimal? @db.Decimal(38, 6)
+  Ajustement_Devise          Decimal? @db.Decimal(38, 6)
+  Nbre_Paquetage             Decimal? @db.Decimal(38, 2)
+  Valeur                     Decimal? @db.Decimal(38, 2)
+  Base_Poids_Brut            Decimal? @db.Decimal(38, 2)
+  Base_Poids_Net             Decimal? @db.Decimal(38, 2)
+  Base_Volume                Decimal? @db.Decimal(38, 2)
+}
+
+view VTauxChange {
+  ID_Taux_Change Int
+  ID_Convertion  Int
+  Devise         String   @db.NVarChar(5)
+  Taux_Change    Decimal  @db.Decimal(24, 6)
+  Date_Creation  DateTime
+  Nom_Creation   String?  @db.NVarChar(200)
+}
+
+view VPermissionsBase {
+  ID_Permission_Base Int
+  Libelle_Permission String    @db.NVarChar(200)
+  Permission_Active  Boolean
+  Date_Activation    DateTime?
 }
 
 view VNotesDetail {
@@ -386,11 +549,19 @@ view VNotesDetail {
   Libelle_Regime_Declaration String?  @db.NVarChar(200)
   Regime                     String   @db.NVarChar(2)
   Regroupement_Client        String   @db.NVarChar(200)
-  Nbre_Paquetage             Decimal? @db.Decimal(38, 6)
-  Valeur                     Decimal? @db.Decimal(38, 6)
-  Base_Poids_Brut            Decimal? @db.Decimal(38, 6)
-  Base_Poids_Net             Decimal? @db.Decimal(38, 6)
-  Base_Volume                Decimal? @db.Decimal(38, 6)
+  Nbre_Paquetage             Decimal? @db.Decimal(38, 2)
+  Valeur                     Decimal? @db.Decimal(38, 2)
+  Base_Poids_Brut            Decimal? @db.Decimal(38, 2)
+  Base_Poids_Net             Decimal? @db.Decimal(38, 2)
+  Base_Volume                Decimal? @db.Decimal(38, 2)
+}
+
+view VSessions {
+  ID_Session      Int
+  ID_Utilisateur  Int
+  Nom_Utilisateur String   @db.NVarChar(200)
+  Debut_Session   DateTime
+  Fin_Session     DateTime
 }
 
 view VUtilisateurs {
@@ -520,9 +691,9 @@ view VDossiers {
   No_OT                     String    @db.NVarChar(100)
   No_Dossier                String    @db.NVarChar(50)
   Nbre_Paquetage_Pesee      Int
-  Poids_Brut_Pesee          Decimal   @db.Decimal(24, 6)
-  Poids_Net_Pesee           Decimal   @db.Decimal(24, 6)
-  Volume_Pesee              Decimal   @db.Decimal(24, 6)
+  Poids_Brut_Pesee          Decimal   @db.Decimal(24, 2)
+  Poids_Net_Pesee           Decimal   @db.Decimal(24, 2)
+  Volume_Pesee              Decimal   @db.Decimal(24, 2)
   Responsable_ID            Int
   Nom_Responsable           String    @db.NVarChar(200)
   Date_Declaration          DateTime?
@@ -542,152 +713,4 @@ view VDossiers {
   Libelle_Statut_Dossier    String    @db.NVarChar(200)
   Date_Creation             DateTime
   Nom_Creation              String?   @db.NVarChar(200)
-}
-
-view VPermissonsRoles {
-  ID_Permission_Role Int
-  ID_Role            Int
-  Libelle_Role       String   @db.NVarChar(200)
-  ID_Permission      Int
-  Libelle_Permission String   @db.NVarChar(200)
-  Date_Creation      DateTime
-  Nom_Creation       String?  @db.NVarChar(200)
-}
-
-view VHSCodes {
-  ID_HS_Code      Int
-  HS_Code         String   @db.NVarChar(50)
-  Libelle_HS_Code String   @db.NVarChar(200)
-  ID_Entite       Int
-  Date_Creation   DateTime
-  Nom_Creation    String?  @db.NVarChar(200)
-}
-
-view VRolesUtilisateurs {
-  ID_Role_Utilisateur Int
-  ID_Role             Int
-  Libelle_Role        String   @db.NVarChar(200)
-  ID_Utilisateur      Int
-  Nom_Utilisateur     String   @db.NVarChar(200)
-  Date_Creation       DateTime
-  Nom_Creation        String?  @db.NVarChar(200)
-}
-
-view VModesTransport {
-  ID_Mode_Transport      String   @db.NVarChar(1)
-  Libelle_Mode_Transport String   @db.NVarChar(200)
-  Date_Creation          DateTime
-  Nom_Creation           String?  @db.NVarChar(200)
-}
-
-view VPays {
-  ID_Pays       Int
-  Code_Pays     String   @db.NVarChar(5)
-  Libelle_Pays  String   @db.NVarChar(200)
-  Devise_Locale String   @db.NVarChar(5)
-  Date_Creation DateTime
-  Nom_Creation  String?  @db.NVarChar(200)
-}
-
-view VSessions {
-  ID_Session      Int
-  ID_Utilisateur  Int
-  Nom_Utilisateur String    @db.NVarChar(200)
-  Debut_Session   DateTime
-  Fin_Session     DateTime?
-}
-
-view VRegimesDouaniers {
-  ID_Regime_Douanier      Int
-  Libelle_Regime_Douanier String   @db.NVarChar(200)
-  Date_Creation           DateTime
-  Nom_Creation            String?  @db.NVarChar(200)
-}
-
-view VSensTrafic {
-  ID_Sens_Trafic      String   @db.NVarChar(1)
-  Libelle_Sens_Trafic String   @db.NVarChar(200)
-  Date_Creation       DateTime
-  Nom_Creation        String?  @db.NVarChar(200)
-}
-
-view VRoles {
-  ID_Role       Int
-  Libelle_Role  String   @db.NVarChar(200)
-  Date_Creation DateTime
-  Nom_Creation  String?  @db.NVarChar(200)
-}
-
-view VStatutsDossier {
-  ID_Statut_Dossier      Int
-  Libelle_Statut_Dossier String @db.NVarChar(200)
-}
-
-view VRegimesDeclarations {
-  ID_Regime_Declaration      Int
-  ID_Regime_Douanier         Int
-  Libelle_Regime_Douanier    String   @db.NVarChar(200)
-  Libelle_Regime_Declaration String   @db.NVarChar(200)
-  Ratio_DC                   Decimal  @db.Decimal(24, 3)
-  Ratio_TR                   Decimal? @db.Decimal(25, 3)
-  ID_Entite                  Int
-  Date_Creation              DateTime
-  Nom_Creation               String?  @db.NVarChar(200)
-}
-
-view VRegimesClients {
-  ID_Regime_Client           Int
-  ID_Client                  Int
-  Nom_Client                 String   @db.NVarChar(200)
-  ID_Regime_Declaration      Int
-  ID_Regime_Douanier         Int
-  Libelle_Regime_Douanier    String   @db.NVarChar(200)
-  Libelle_Regime_Declaration String   @db.NVarChar(200)
-  Ratio_DC                   Decimal  @db.Decimal(24, 3)
-  Ratio_TR                   Decimal? @db.Decimal(25, 3)
-  Date_Creation              DateTime
-  Nom_Creation               String?  @db.NVarChar(200)
-}
-
-view VTauxChange {
-  ID_Taux_Change Int
-  ID_Convertion  Int
-  Devise         String   @db.NVarChar(5)
-  Taux_Change    Decimal  @db.Decimal(24, 6)
-  Date_Creation  DateTime
-  Nom_Creation   String?  @db.NVarChar(200)
-}
-
-view VPermissionsBase {
-  ID_Permission_Base Int
-  Libelle_Permission String    @db.NVarChar(200)
-  Permission_Active  Boolean
-  Date_Activation    DateTime?
-}
-
-view VColisageDossiers {
-  ID_Colisage_Dossier        Int
-  ID_Dossier                 Int
-  HS_Code                    String?  @db.NVarChar(50)
-  Description_Colis          String
-  No_Commande                String   @db.NVarChar(50)
-  Nom_Fournisseur            String   @db.NVarChar(200)
-  No_Facture                 String   @db.NVarChar(50)
-  Item_No                    String   @db.NVarChar(50)
-  Code_Devise                String   @db.NVarChar(5)
-  Qte_Colis                  Decimal  @db.Decimal(24, 6)
-  Prix_Unitaire_Colis        Decimal  @db.Decimal(24, 6)
-  Poids_Brut                 Decimal  @db.Decimal(24, 6)
-  Poids_Net                  Decimal  @db.Decimal(24, 6)
-  Volume                     Decimal  @db.Decimal(24, 6)
-  Pays_Origine               String   @db.NVarChar(200)
-  ID_Regime_Declaration      Int?
-  ID_Regime_Douanier         Int?
-  Libelle_Regime_Douanier    String?  @db.NVarChar(200)
-  Libelle_Regime_Declaration String?  @db.NVarChar(200)
-  Ratio_DC                   Decimal? @db.Decimal(24, 3)
-  Ratio_TR                   Decimal? @db.Decimal(25, 3)
-  Regroupement_Client        String   @db.NVarChar(200)
-  Date_Creation              DateTime
-  Nom_Creation               String?  @db.NVarChar(200)
 }

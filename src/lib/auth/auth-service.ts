@@ -67,7 +67,9 @@ export async function getUserById(userId: number): Promise<AuthUser | null> {
     const session = await prisma.tSessions.findFirst({
         where: {
             Utilisateur: userId,
-            Fin_Session: null,
+            Fin_Session: {
+                equals: new Date('1900-01-01') // ou une autre valeur par défaut qui représente "pas terminé"
+            }
         },
         orderBy: {
             Debut_Session: 'desc',

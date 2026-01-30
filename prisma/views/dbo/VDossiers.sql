@@ -35,7 +35,7 @@ SELECT
   N.[Reference_Etape] AS [Reference_Etape_Actuelle],
   N.[Qte_Etape] AS [Qte_Etape_Actuelle],
   N.[Obs_Etape] AS [Obs_Etape_Actuelle],
-  N.[Retard_Etape] AS [Retard_Etape_Actuelle],
+  N.Retard_Etape AS [Retard_Etape_Actuelle],
   X.[Date Debut] AS [Date_Ouverture_Dossier],
   Y.[Date Debut] AS [Date_Cloture_Dossier],
   H.[ID Statut Dossier] AS [ID_Statut_Dossier],
@@ -43,15 +43,16 @@ SELECT
   A.[Date Creation] AS [Date_Creation],
   Z.Nom_Utilisateur AS [Nom_Creation]
 FROM
-  dbo.TDossiers AS A
+  [dbo].[TDossiers] AS A
   JOIN dbo.TClients AS B ON A.[Client] = B.[ID Client]
   JOIN dbo.VTypesDossiers AS C ON A.[Type Dossier] = C.[ID_Type_Dossier]
+  JOIN dbo.TStatutsDossier AS F ON A.[Statut Dossier] = F.[ID Statut Dossier]
   JOIN dbo.TUtilisateurs AS G ON A.[Responsable Dossier] = G.[ID Utilisateur]
   JOIN dbo.TStatutsDossier AS H ON A.[Statut Dossier] = H.[ID Statut Dossier]
   JOIN dbo.VBranches AS I ON A.[Branche] = I.[ID_Branche]
-  LEFT JOIN dbo.VEtapesDossiers AS N ON A.[Derniere Etape Dossier] = N.[ID_Etape_Dossier]
-  LEFT JOIN dbo.TConvertions AS P ON A.[Convertion] = P.[ID Convertion]
-  LEFT JOIN dbo.VSessions AS Z ON A.[Session] = Z.[ID_Session]
+  LEFT JOIN dbo.[VEtapesDossiers] AS N ON A.[Derniere Etape Dossier] = N.[ID_Etape_Dossier]
+  LEFT JOIN dbo.TConvertions AS P ON A.Convertion = P.[ID Convertion]
+  LEFT JOIN dbo.[VSessions] AS Z ON A.[Session] = Z.[ID_Session]
   LEFT JOIN (
     SELECT
       [Dossier],
@@ -60,7 +61,7 @@ FROM
       dbo.TEtapesDossiers
     WHERE
       [Etape Dossier] = 0
-  ) AS X ON A.[ID Dossier] = X.[Dossier]
+  ) AS X ON A.[ID Dossier] = X.Dossier
   LEFT JOIN (
     SELECT
       [Dossier],
@@ -69,4 +70,4 @@ FROM
       dbo.TEtapesDossiers
     WHERE
       [Etape Dossier] = 1000000
-  ) AS Y ON A.[ID Dossier] = Y.[Dossier];
+  ) AS Y ON A.[ID Dossier] = Y.Dossier;

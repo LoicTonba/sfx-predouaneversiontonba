@@ -6,4 +6,4 @@ SELECT
   A.[Fin Session] AS [Fin_Session]
 FROM
   dbo.TSessions AS A
-  JOIN dbo.TUtilisateurs AS B ON A.Utilisateur = B.[ID Utilisateur];
+  JOIN dbo.TUtilisateurs AS B ON A.[ID Session] = B.[Session];

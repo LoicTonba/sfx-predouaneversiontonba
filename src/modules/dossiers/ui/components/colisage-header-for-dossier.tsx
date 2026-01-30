@@ -6,7 +6,7 @@ import { PlusIcon, XCircleIcon, SearchIcon } from "lucide-react";
 import { useState } from "react";
 import { Input } from "../../../../components/ui/input";
 import { useColisageSearch } from "../../hooks/use-colisage-search";
-import { NewColisageDialog } from "./new-colisage-dialog";
+// import { NewColisageDialog } from "./new-colisage-dialog";
 
 type ColisageHeaderProps = {
     dosierId: string;
@@ -29,18 +29,18 @@ export const ColisageHeaderForDossier = ({ dosierId }: ColisageHeaderProps) => {
 
     return (
         <>
-            <NewColisageDialog
+            {/* <NewColisageDialog
                 open={isNewDialogOpen}
                 onOpenChange={setIsNewDialogOpen}
                 dosierId={dosierId}
-            />
+            /> */}
             <div className="py-4 px-4 md:px-8 flex flex-col gap-y-4">
                 <div className="flex items-center justify-between">
-                    <h5 className="font-medium text-xl">Les Colisages de se dossier</h5>
-                    <Button onClick={() => setIsNewDialogOpen(true)}>
+                    <h5 className="font-medium text-xl">Les Colisages de ce dossier</h5>
+                    {/* <Button onClick={() => setIsNewDialogOpen(true)}>
                         <PlusIcon />
                         Nouveau Colisage
-                    </Button>
+                    </Button> */}
                 </div>
                 <ScrollArea>
                     <div className="flex items-center gap-x-2 p-1">
