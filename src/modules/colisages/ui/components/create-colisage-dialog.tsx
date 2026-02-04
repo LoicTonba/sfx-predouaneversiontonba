@@ -6,7 +6,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { ColisageFormForDossier } from "./colisage-form-for-dossier";
+import { ColisageFormForDossier } from "../../../colisages/ui/components/colisage-form-for-dossier";
 
 interface CreateColisageDialogProps {
     open: boolean;

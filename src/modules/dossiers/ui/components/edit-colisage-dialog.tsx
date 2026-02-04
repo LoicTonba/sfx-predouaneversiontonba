@@ -1,7 +1,7 @@
 import { ResponsiveDialog } from "@/components/responsive-dialog";
-import { ColisageFormForDossier } from "./colisage-form-for-dossier";
+import { ColisageFormForDossier } from "../../../colisages/ui/components/colisage-form-for-dossier";
 import { useEffect, useState } from "react";
-import { getColisageForEdit } from "../../server/colisage-actions";
+import { getColisageForEdit } from "../../../colisages/server/colisage-actions";
 
 interface Colisage {
     ID_Colisage_Dossier: number;

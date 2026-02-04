@@ -45,7 +45,7 @@ model TCodesEtapes {
   Entite          Int                      @default(0, map: "DF_TCodesEtapes_Entite")
   Session         Int                      @default(0, map: "DF__TCodesEta__Sessi__2A164134")
   Date_Creation   DateTime                 @default(now(), map: "DF__TCodesEta__Date __2B0A656D") @map("Date Creation")
-  RowVer          Bytes?   @map("RowVer")
+  RowVer           Bytes?   @map("RowVer")
   TEtapesDossiers TEtapesDossiers[]
 
   @@unique([Libelle_Etape, Entite], map: "UQ_TCodesEtapes$Libelle Etape")

@@ -102,7 +102,7 @@ export async function checkConversionExists(dateDeclaration: Date, entiteId: num
  * - Appelle la procédure stockée SQL Server de manière SAFE
  * ============================================================================
  */
-export async function genererNotesDetail(dossierId: number, dateDeclaration: Date) {
+export async function genererNotesDetail(dossierId: number, dateDeclaration: Date) { 
     
     try {
         /* --------------------------------------------------------------------
@@ -404,16 +404,33 @@ export async function createMissingExchangeRates(
  */
 export async function getNotesDetail(dossierId: number) {
     try {
+        console.log(" [getNotesDetail] Début - dossierId:", dossierId);
+        
+        // --------------------------------------------------------------------
+        // TEST : Vérifier directement dans la table TNotesDetail
+        // --------------------------------------------------------------------
+        const notesDirectes = await prisma.$queryRaw<any[]>`
+            SELECT * FROM TNotesDetail
+            WHERE [Colisage Dossier] IN (
+                SELECT [ID Colisage Dossier] FROM TColisageDossiers WHERE [Dossier] = ${dossierId}
+            )
+        `;
+        console.log(" [getNotesDetail] Notes dans TNotesDetail (table directe):", notesDirectes.length, "lignes");
+        console.log(" [getNotesDetail] Première note directe:", notesDirectes[0] || "AUCUNE");
+        
         // --------------------------------------------------------------------
         // 1️⃣ RÉCUPÉRATION DES NOTES DEPUIS LA VUE
         // --------------------------------------------------------------------
         // Récupère toutes les notes du dossier depuis la vue VNotesDetail
-        // La vue contient déjà toutes les jointures nécessaires
+        // La vue contient déjà toutes les jointures et agrégations nécessaires
         const notes = await prisma.$queryRaw<any[]>`
             SELECT * FROM VNotesDetail
             WHERE ID_Dossier = ${dossierId}
-            ORDER BY ID_Colisage_Dossier, Regime  // Trie par colisage puis par régime
+            ORDER BY Regroupement_Client, Regime
         `;
+        
+        console.log(" [getNotesDetail] Notes récupérées depuis VNotesDetail:", notes.length, "lignes");
+        console.log(" [getNotesDetail] Première note (si existe):", notes[0] || "AUCUNE");
 
         // --------------------------------------------------------------------
         // 2️⃣ SÉRIALISATION DES DONNÉES
@@ -421,6 +438,8 @@ export async function getNotesDetail(dossierId: number) {
         // Convertit TOUS les Decimal en nombres via JSON.parse(JSON.stringify())
         // C'est la méthode la plus fiable pour sérialiser les Decimal de Prisma
         const serializedNotes = JSON.parse(JSON.stringify(notes));
+        
+        console.log("📊 [getNotesDetail] Notes sérialisées:", serializedNotes.length, "lignes");
 
         // --------------------------------------------------------------------
         // 3️⃣ MAPPING DES COLONNES POUR LE FRONTEND
@@ -434,6 +453,9 @@ export async function getNotesDetail(dossierId: number) {
             Poids_Net: n.Base_Poids_Net,                          // Poids net base
             Volume: n.Base_Volume,                               // Volume base
         }));
+        
+        console.log("✅ [getNotesDetail] Notes mappées:", mappedNotes.length, "lignes");
+        console.log("✅ [getNotesDetail] Retour:", { success: true, dataLength: mappedNotes.length });
 
         return { success: true, data: mappedNotes };
     } catch (error) {

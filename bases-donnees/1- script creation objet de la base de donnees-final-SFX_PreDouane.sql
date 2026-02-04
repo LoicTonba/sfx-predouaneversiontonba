@@ -1993,7 +1993,7 @@ BEGIN
 		END
 	END
 
-	-- Recuperer l'ID de la ligne de la colisage suivant Row_Key
+	-- Recuperer l'ID de la ligne de la colisage suivant UploadKey
 	Declare @ID_Colisage_Dossier int=null
 	IF (ISNULL(@Upload_Key,'')<>'')
 	SELECT @ID_Colisage_Dossier=[ID Colisage Dossier] FROM TColisageDossiers WHERE ([Dossier]=@Id_Dossier) AND ([UploadKey]=@Upload_Key)
@@ -2020,7 +2020,7 @@ BEGIN
            ,[Regroupement Client]
            ,[UploadKey]
            ,[Session])
-		VALUES (@ID_Client
+		VALUES (@ID_Dossier
            ,@ID_HSCode
            ,@Descr
            ,ISNULL(@Command_No,'')

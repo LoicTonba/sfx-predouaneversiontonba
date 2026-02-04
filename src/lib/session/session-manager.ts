@@ -17,41 +17,18 @@ const prisma = new PrismaClient();
  * @returns ID de la session créée
  */
 
-// export async function createSession(utilisateurId: number): Promise<number> {
-//     const session = await prisma.tSessions.create({
-//         data: {
-//             Utilisateur: utilisateurId,
-//             Debut_Session: new Date(),
-//             Fin_Session: null,
-//         },
-//     });
-
-//     return session.ID_Session;
-// }
-
 export async function createSession(utilisateurId: number): Promise<number> {
-  // 1. Insertion
-  await prisma.$executeRaw`
-    INSERT INTO [dbo].[TSessions] ([Utilisateur], [Debut Session])
-    VALUES (${utilisateurId}, SYSDATETIME())
-  `;
+    const session = await prisma.tSessions.create({
+        data: {
+            Utilisateur: utilisateurId,
+            Debut_Session: new Date(),
+            Fin_Session: new Date(),
+        },
+    });
 
-  // 2. Récupération de l'ID généré
-  const result = await prisma.$queryRaw<
-    { ID_Session: number }[]
-  >`
-    SELECT TOP 1 [ID Session] AS ID_Session
-    FROM [dbo].[TSessions]
-    WHERE [Utilisateur] = ${utilisateurId}
-    ORDER BY [ID Session] DESC
-  `;
-
-  if (result.length === 0) {
-    throw new Error('Création de session échouée');
-  }
-
-  return result[0].ID_Session;
+    return session.ID_Session;
 }
+
 
 /**
  * Fermer une session SQL Server
@@ -125,7 +102,9 @@ export async function getOrCreateSession(utilisateurId: number): Promise<number>
             where: {
                 ID_Session: sessionId,
                 Utilisateur: utilisateurId,
-                Fin_Session: null, // Session active
+                Fin_Session: {
+                    equals: prisma.tSessions.fields.Debut_Session
+                }, // Session active
             },
         });
 

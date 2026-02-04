@@ -47,16 +47,26 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
     }, [dossierId]);
 
     const loadNotes = async () => {
+        console.log(" [loadNotes] Début - dossierId:", dossierId);
         setIsLoading(true);
         try {
             const result = await getNotesDetail(dossierId);
+            console.log(" [loadNotes] Résultat reçu:", result);
+            console.log(" [loadNotes] success:", result.success);
+            console.log(" [loadNotes] data:", result.data);
+            console.log(" [loadNotes] data.length:", result.data?.length);
+            
             if (result.success && result.data) {
+                console.log(" [loadNotes] Mise à jour du state avec", result.data.length, "notes");
                 setNotes(result.data);
+            } else {
+                console.log(" [loadNotes] Pas de données ou erreur:", result.error);
             }
         } catch (error) {
-            console.error("Error loading notes:", error);
+            console.error(" [loadNotes] Error loading notes:", error);
         } finally {
             setIsLoading(false);
+            console.log(" [loadNotes] Fin");
         }
     };
 
@@ -183,7 +193,7 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
 
             // === EN-TÊTE AVEC LOGO ===
             // Bordure d'en-tête
-            doc.setDrawColor(66, 139, 202);
+            doc.setDrawColor(245, 158, 66);
             doc.setLineWidth(0.5);
             doc.line(14, 8, 283, 8);
             doc.line(14, 32, 283, 32);
@@ -205,7 +215,7 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                     // Nom de l'entreprise à côté du logo
                     doc.setFontSize(16);
                     doc.setFont('helvetica', 'bold');
-                    doc.setTextColor(66, 139, 202);
+                    doc.setTextColor(245, 158, 66);
                     doc.text('SFX PRE-DOUANE', 42, 18);
                     
                     doc.setFontSize(10);
@@ -219,7 +229,7 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                 // Fallback sans logo
                 doc.setFontSize(18);
                 doc.setFont('helvetica', 'bold');
-                doc.setTextColor(66, 139, 202);
+                doc.setTextColor(245, 158, 66);
                 doc.text('SFX PRE-DOUANE', 16, 20);
                 
                 doc.setFontSize(10);
@@ -239,7 +249,7 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
             // Informations du dossier (côté droit)
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
-            doc.setTextColor(66, 139, 202);
+            doc.setTextColor(245, 158, 66);
             doc.text(`DOSSIER N° ${dossierId}`, 220, 15);
             
             doc.setFont('helvetica', 'normal');
@@ -299,6 +309,7 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                 Number(note.Volume).toFixed(2),
                 Number(note.Poids_Brut || 0).toFixed(2),
                 Number(note.Poids_Net || 0).toFixed(2),
+                Number(note.Nbre_Paquetage || 0).toFixed(0),
             ]);
 
             // === TABLEAU DES DONNÉES ===
@@ -311,7 +322,7 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                 startY: 68,
                 margin: { left: marginLeft, right: marginRight },
                 tableWidth: availableWidth,
-                head: [["Groupement", "Régime Décl.", "Pays D'origine", "HS Code", "" ,"Qté", "Prix Unit.", "Prix Total", "Volume", "Poids Brut", "Poids Net"]],
+                head: [["Groupement", "Régime Décl.", "Pays D'origine", "HS Code", "" ,"Qté", "Prix Unit.", "Prix Total", "Volume", "Poids Brut", "Poids Net", "Nbre Paquetage"]],
                 body: tableData,
                 styles: { 
                     fontSize: 8,
@@ -322,7 +333,7 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                     halign: 'left'
                 },
                 headStyles: { 
-                    fillColor: [66, 139, 202],
+                    fillColor: [245, 158, 66],
                     textColor: [255, 255, 255],
                     fontSize: 9,
                     fontStyle: 'bold',
@@ -337,7 +348,8 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                     7: { halign: 'right' }, // Prix Total
                     8: { halign: 'right' }, // Volume
                     9: { halign: 'right' }, // Poids Brut
-                    10: { halign: 'right' } // Poids Net
+                    10: { halign: 'right' }, // Poids Net
+                    11: { halign: 'right' }, // Nbre Paquetage
                 },
             });
 
@@ -418,7 +430,7 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                 );
             },
         },
-          // 5. Régime
+        // 5. Régime
         {
             accessorKey: "Regime",
             header: "-",
@@ -492,6 +504,15 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
             cell: ({ row }) => {
                 const poids = row.getValue("Poids_Net") as number;
                 return `${Number(poids || 0).toFixed(2)} kg`;
+            },
+        },
+        // 12. Nombre de Paquetages
+        {
+            accessorKey: "Nbre_Paquetage",
+            header: "Nbre Paquetage",
+            cell: ({ row }) => {
+                const nbre = row.getValue("Nbre_Paquetage") as number;
+                return Number(nbre || 0).toFixed(0);
             },
         },
     ];

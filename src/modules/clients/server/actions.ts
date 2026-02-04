@@ -19,36 +19,18 @@ export async function createClient(data: { nom: string }) {
       throw new Error("Missing User Session");
     }
 
-    // 1. Insertion SQL brute dans la table TClients (pas la vue VClients)
-    await prisma.$executeRaw`
-      INSERT INTO [dbo].[TClients]
-        ([Nom Client], [Entite], [Session], [Date Creation])
-      VALUES
-        (${data.nom}, 0, ${parseInt(session.user.id)}, SYSDATETIME())
-    `;
-
-    // 2. Récupération du client créé via la vue VClients
-    const client = await prisma.$queryRaw<
-      {
-        ID_Client: number;
-        Nom_Client: string;
-        ID_Entite: number;
-        Date_Creation: Date;
-        Nom_Creation: string;
-      }[]
-    >`
-      SELECT TOP 1
-        [ID_Client]     AS ID_Client,
-        [Nom_Client]    AS Nom_Client,
-        [ID_Entite]     AS ID_Entite,
-        [Date_Creation] AS Date_Creation,
-        [Nom_Creation]  AS Nom_Creation
-      FROM [dbo].[VClients]
-      ORDER BY [ID_Client] DESC
-    `;
-
+    // Utiliser l'entité par défaut (ID 0 = DEFAULT ENTITY créée par sql.sql)
+    const client = await prisma.tClients.create({
+      data: {
+        Nom_Client: data.nom,
+        Entite: 0, // Entité par défaut
+        Session: parseInt(session.user.id),
+        Date_Creation: new Date(),
+      },
+    });
+    
     revalidatePath("/client");
-    return { success: true, data: client[0] };
+    return { success: true, data: client };
   } catch (error) {
     console.error('Erreur création client:', error);
     return { 
@@ -131,7 +113,10 @@ export async function getAllClients(
     return { success: true, data: adaptedClients, total: adaptedClients.length };
   } catch (error) {
     console.error("getAllClients error:", error);
-    return { success: false, error };
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Erreur inconnue' 
+    };
   }
 }
 
@@ -144,6 +129,7 @@ export async function updateClient(id: string, data: { nom: string }) {
       where: { ID_Client: parseInt(id) },
       data: {
         Nom_Client: data.nom,
+        Entite: 0, // Entité par défaut
       },
     });
 
@@ -151,7 +137,9 @@ export async function updateClient(id: string, data: { nom: string }) {
     revalidatePath("/client");
     return { success: true, data: client };
   } catch (error) {
-    return { success: false, error };
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Erreur inconnue' };
   }
 }
 
@@ -167,6 +155,8 @@ export async function deleteClient(id: string) {
     revalidatePath("/client");
     return { success: true, data: client };
   } catch (error) {
-    return { success: false, error };
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Erreur inconnue' };
   }
 }

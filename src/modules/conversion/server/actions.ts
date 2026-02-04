@@ -76,23 +76,40 @@ export async function createConversion(data: any) {
         const dateConvertion = new Date(data.Date_Convertion);
         dateConvertion.setHours(0, 0, 0, 0); // Mettre à 00:00:00.000 en heure locale
         
+        // Vérifier si une conversion existe déjà pour cette date et entité
+        const existingConversion = await prisma.tConvertions.findFirst({
+            where: {
+                Date_Convertion: dateConvertion,
+                Entite: 0,
+            },
+        });
+
+        if (existingConversion) {
+            // Retourner la conversion existante au lieu de créer un doublon
+            return { 
+                success: true, 
+                data: existingConversion,
+                message: "Une conversion existe déjà pour cette date"
+            };
+        }
+
         // Créer la conversion
         const conversion = await prisma.tConvertions.create({
-        data: {
-            Date_Convertion: dateConvertion,
-            Entite: 0,
-            Session: Number(session.user.id),
-        },
+            data: {
+                Date_Convertion: dateConvertion,
+                Entite: 0,
+                Session: Number(session.user.id),
+            },
         });
        
-            // taux devise locale
+        // taux devise locale
         await prisma.tTauxChange.create({
-        data: {
-            Convertion: conversion.ID_Convertion,
-            Devise: 0,
-            Taux_Change: 1,
-            Session: Number(session.user.id),
-        },
+            data: {
+                Convertion: conversion.ID_Convertion,
+                Devise: 0,
+                Taux_Change: 1,
+                Session: Number(session.user.id),
+            },
         });
 
        revalidatePath("/conversion");

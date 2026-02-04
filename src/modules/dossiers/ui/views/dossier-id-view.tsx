@@ -3,7 +3,7 @@
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Calendar, Package, Truck, User, Building2, MapPin, FileText } from "lucide-react";
+import { Calendar, Package, Truck, User, MapPin, FileText } from "lucide-react";
 
 import { ErrorState } from "@/components/error-state";
 import { LoadingState } from "@/components/loading-state";
@@ -16,12 +16,11 @@ import { fr } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { DossierIdHeader } from "../components/dossier-id-header";
 import { UpdateDossierDialog } from "../components/update-dossier-dialog";
-import { ColisageImportForDossier } from "../components/colisage-import-for-dossier";
-import { ColisageListForDossier } from "../components/colisage-list-for-dossier";
-import { ColisageHeaderForDossier } from "../components/colisage-header-for-dossier";
+import { ColisageListForDossier } from "@/modules/colisages/ui/components/colisage-list-for-dossier";
+import { ColisageHeaderForDossier } from "@/modules/colisages/ui/components/colisage-header-for-dossier";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { NoteDetailView } from "./note-detail-view";
-import { ColisageImportDialog } from "../components/colisage-template";
+import { NoteDetailView } from "../../../notes-details/ui/views/note-detail-view";
+import { ColisageImportDialog } from "@/modules/colisages/ui/components/colisage-template";
 
 
 interface Props {

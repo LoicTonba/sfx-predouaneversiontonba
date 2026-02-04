@@ -12,7 +12,7 @@ import { headers } from "next/headers";
 /**
  * Crée un nouveau HS Code
  */
-export async function createHSCode(data: { code: string; libelle: string }) {
+export async function createHSCode(data: any) {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -22,49 +22,18 @@ export async function createHSCode(data: { code: string; libelle: string }) {
       throw new Error("Missing User Session");
     }
 
-     // 1️⃣ Vérification unicité (SQL Server SAFE)
-    const exists = await prisma.$queryRaw<
-      { found: number }[]
-    >`
-      SELECT TOP 1 1 AS found
-      FROM [dbo].[THSCodes]
-      WHERE [HS Code] = ${data.code}
-        AND [Entite] = 0
-    `;
-
-    if (exists.length > 0) {
-      return { success: false, error: "Ce HS Code existe déjà" };
-    }
-
-    // 2️⃣ Création (RAW SQL maîtrisé)
-    const inserted = await prisma.$queryRaw<
-      { ID_HS_Code: number }[]
-    >`
-      INSERT INTO [dbo].[THSCodes]
-        ([HS Code], [Libelle HS Code], [UploadKey], [Entite], [Session], [Date Creation])
-      OUTPUT INSERTED.[ID HS Code] AS ID_HS_Code
-      VALUES
-        (${data.code}, ${data.libelle}, 'MANUAL', 0, ${Number(session.user.id)}, SYSDATETIME())
-    `;
-
-    const id = inserted[0]?.ID_HS_Code;
-
-    if (!id) {
-      throw new Error("Insertion failed: ID not returned");
-    }
+    const hscode = await prisma.tHSCodes.create({
+      data: {
+        HS_Code: data.code,
+        Libelle_HS_Code: data.libelle,
+        Session: parseInt(session.user.id),
+        Date_Creation: new Date(),
+      },
+    });
 
     revalidatePath("/hscode");
-
-    // 🔥 IMPORTANT : retourner l’ID
-    return {
-      success: true,
-      data: {
-        ID_HS_Code: id,
-      },
-    };
-
+    return { success: true, data: hscode };
   } catch (error) {
-    console.error("💥 createHSCode error:", error);
     return { success: false, error };
   }
 }
@@ -86,10 +55,10 @@ export async function getHSCodeById(id: string) {
     });
 
     if (!hscode) {
-      return { success: false };
+      return { success: false, error: 'HS Code non trouvé' };
     }
 
-    // 🔁 Mapping vers les noms attendus par le frontend
+    // Mapper vers les anciens noms de colonnes pour la compatibilité frontend
     const mappedData = {
       ID_HS_Code: hscode.ID_HS_Code,
       HS_Code: hscode.HS_Code,
@@ -111,46 +80,47 @@ export async function getHSCodeById(id: string) {
 /**
  * Récupère tous les HS Codes (SAFE – sans doublons)
  */
-export async function getAllHSCodes(search = "") {
+export async function getAllHSCodes(
+  page = 1,
+  take = 10000,
+  search = ""
+) {
   try {
-    let query = `
-      SELECT
-        ID_HS_Code,
-        HS_Code,
-        Libelle_HS_Code,
-        MIN(Date_Creation) AS Date_Creation,
-        MAX(Nom_Creation) AS Nom_Creation
-      FROM VHSCodes
-      WHERE ID_HS_Code <> 0
-    `;
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
 
-    if (search) {
-      query += `
-        AND (
-          HS_Code LIKE '%' + @search + '%'
-          OR Libelle_HS_Code LIKE '%' + @search + '%'
-        )
-      `;
+    if (!session) {
+      throw new Error("Missing User Session");
     }
 
-    query += `
-      GROUP BY
-        ID_HS_Code,
-        HS_Code,
-        Libelle_HS_Code
-      ORDER BY HS_Code ASC
-    `;
-
-    const data = await prisma.$queryRawUnsafe<any[]>(
-      query,
-      { search }
-    );
-
-    return {
-      success: true,
-      data,
-      total: data.length,
+    const whereCondition: any = {
+      ID_HS_Code: { not: 0 }
     };
+
+    if (search) {
+      whereCondition.OR = [
+        { HS_Code: { contains: search } },
+        { Libelle_HS_Code: { contains: search } }
+      ];
+    }
+
+    const hscodes = await prisma.vHSCodes.findMany({
+      where: whereCondition,
+      orderBy: { HS_Code: 'asc' },
+      distinct: ['ID_HS_Code']
+    });
+
+    // Mapper vers les anciens noms de colonnes pour la compatibilité frontend
+    const mappedData = hscodes.map(h => ({
+        ID_HS_Code: h.ID_HS_Code,
+        HS_Code: h.HS_Code,
+        Libelle_HS_Code: h.Libelle_HS_Code,
+        Date_Creation: h.Date_Creation,
+        Nom_Creation: h.Nom_Creation,
+    }));
+
+    return { success: true, data: mappedData, total: mappedData.length };
   } catch (error) {
     console.error("getAllHSCodes error:", error);
     return { success: false, error };
@@ -175,26 +145,20 @@ export async function updateHSCode(
       return { success: false, error: "Aucun champ à mettre à jour" };
     }
 
-    if (data.code) {
-      await prisma.$executeRaw`
-        UPDATE [dbo].[THSCodes]
-        SET [HS Code] = ${data.code}
-        WHERE [ID HS Code] = ${parseInt(id)}
-      `;
-    }
-
-    if (data.libelle) {
-      await prisma.$executeRaw`
-        UPDATE [dbo].[THSCodes]
-        SET [Libelle HS Code] = ${data.libelle}
-        WHERE [ID HS Code] = ${parseInt(id)}
-      `;
-    }
+   
+    const hscode = await prisma.tHSCodes.update({
+      where: { ID_HS_Code: parseInt(id) },
+      data: {
+        ...(data.code && { HS_Code: data.code }),
+        ...(data.libelle && { Libelle_HS_Code: data.libelle }),
+      },
+    });
+    
 
     revalidatePath(`/hscode/${id}`);
     revalidatePath("/hscode");
 
-    return { success: true };
+    return { success: true, data: hscode };
   } catch (error) {
     return { success: false, error };
   }
@@ -209,13 +173,12 @@ export async function updateHSCode(
  */
 export async function deleteHSCode(id: string) {
   try {
-    await prisma.$executeRaw`
-      DELETE FROM [dbo].[THSCodes]
-      WHERE [ID HS Code] = ${parseInt(id)}
-    `;
+   const hscode = await prisma.tHSCodes.delete({
+      where: { ID_HS_Code: parseInt(id) },
+    });
 
     revalidatePath("/hscode");
-    return { success: true };
+    return { success: true, data: hscode };
   } catch (error) {
     return { success: false, error };
   }
@@ -230,9 +193,17 @@ export async function deleteHSCode(id: string) {
  * Type pour l'import Excel des HS Codes
  */
 export interface ImportHSCodeRow {
-  Row_Key: string;
   HS_Code: string;
   Description: string;
+}
+
+function normalizeHSCode(value: unknown): string {
+  if (value === null || value === undefined) return "";
+
+  // Convertit TOUJOURS en string sans notation scientifique
+  return String(value)
+    .trim()
+    .replace(/\.0$/, ""); // Excel ajoute parfois ".0"
 }
 
 /**
@@ -244,6 +215,14 @@ export interface ImportHSCodeRow {
  */
 export async function previewHSCodesImport(formData: FormData) {
   try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session) {
+      throw new Error("Missing User Session");
+    }
+
     const file = formData.get("file") as File;
     if (!file) {
       return { success: false, error: "Aucun fichier fourni" };
@@ -255,13 +234,17 @@ export async function previewHSCodesImport(formData: FormData) {
     const buffer = await file.arrayBuffer();
     const XLSX = await import("xlsx");
     const workbook = XLSX.read(buffer, { type: "array" });
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-    if (!sheet) {
-      return { success: false, error: "Feuille Excel introuvable" };
+    if (!worksheet) {
+      return { success: false, error: "Aucune feuille trouvée dans le fichier" };
     }
 
-    const rows = XLSX.utils.sheet_to_json(sheet) as any[];
+    // IMPORTANT : raw:false pour éviter les Int
+    const rows = XLSX.utils.sheet_to_json(worksheet, {
+      raw: false,
+      defval: "",
+    }) as any[];
 
     if (rows.length === 0) {
       return { success: false, error: "Le fichier Excel est vide" };
@@ -270,48 +253,61 @@ export async function previewHSCodesImport(formData: FormData) {
     /* ============================
        Analyse & validation
     ============================ */
-    const preview: any[] = [];
+    const previewData: any[] = [];
     const errors: string[] = [];
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
+      try {
+        const rawHS =
+          rows[i].HS_Code ||
+          rows[i]["HS Code"] ||
+          rows[i].Code;
 
-      const Row_Key = row.Row_Key || row["Row Key"] || "IMPORT";
-      const HS_Code = row.HS_Code || row["HS Code"] || row.Code || "";
-      const Description = row.Description || row.Libelle || row.Label || "";
+        const rowData: ImportHSCodeRow = {
+          HS_Code: normalizeHSCode(rawHS),
+          Description:
+            String(
+              rows[i].Description ||
+              rows[i].Libelle ||
+              rows[i].Label ||
+              ""
+            ).trim(),
+        };
 
-      // 🔴 Validation stricte (comme Edwin)
-      if (!HS_Code) {
-        errors.push(`Ligne ${i + 2} : HS Code manquant`);
-        continue;
+        // Validation
+        if (!rowData.HS_Code) {
+          errors.push(`Ligne ${i + 2}: HS Code manquant`);
+          continue;
+        }
+
+        if (!rowData.Description) {
+          errors.push(`Ligne ${i + 2}: Description manquante`);
+          continue;
+        }
+
+        // Vérifier si le HS Code existe déjà
+        const existing = await prisma.tHSCodes.findFirst({
+          where: {
+            HS_Code: rowData.HS_Code
+          }
+        });
+
+        previewData.push({
+          ...rowData,
+          status: existing ? 'existing' : 'new',
+          existingId: existing?.ID_HS_Code,
+          existingData: existing ? {
+            hsCode: existing.HS_Code,
+            libelleHSCode: existing.Libelle_HS_Code,
+          } : null
+        });
+
+      } catch (error: any) {
+        errors.push(`Ligne ${i + 2}: ${error.message}`);
       }
-
-      if (!Description) {
-        errors.push(`Ligne ${i + 2} : Libellé manquant`);
-        continue;
-      }
-
-      /* ============================
-         Détection HS Code existant
-         (SQL Server SAFE)
-      ============================ */
-      const existing = await prisma.$queryRaw<
-        { ID_HS_Code: number }[]
-      >`
-        SELECT TOP 1 [ID HS Code] AS ID_HS_Code
-        FROM [dbo].[THSCodes]
-        WHERE [HS Code] = N'${HS_Code}'
-          AND [Entite] = 0
-      `;
-
-      preview.push({
-        Row_Key,
-        HS_Code,
-        Description,
-        status: existing.length > 0 ? "existing" : "new",
-        existingId: existing[0]?.ID_HS_Code ?? null,
-      });
     }
+
 
     /* ============================
        Résultat final
@@ -319,14 +315,14 @@ export async function previewHSCodesImport(formData: FormData) {
     return {
       success: true,
       data: {
-        preview,
+        preview: previewData,
         total: rows.length,
-        valid: preview.length,
+        valid: previewData.length,
         errors: errors.length > 0 ? errors : undefined,
         stats: {
-          new: preview.filter(p => p.status === "new").length,
-          existing: preview.filter(p => p.status === "existing").length,
-        },
+          new: previewData.filter(p => p.status === 'new').length,
+          existing: previewData.filter(p => p.status === 'existing').length,
+        }
       },
     };
 
@@ -355,13 +351,23 @@ export async function importHSCodesFromExcel(
   mode: "create" | "update" | "both"
 ) {
   try {
+     const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session) {
+      throw new Error("Missing User Session");
+    }
+
     let created = 0;
     let updated = 0;
     const errors: string[] = [];
 
     for (const item of previewData) {
       try {
-        if (!item.HS_Code || !item.Description) continue;
+        const hsCode = normalizeHSCode(item.HS_Code);
+        const description = String(item.Description).trim();
+        if (!hsCode || !description) continue;
 
         /* ============================================================
            🆕 CREATE 
@@ -370,43 +376,33 @@ export async function importHSCodesFromExcel(
           item.status === "new" &&
           (mode === "create" || mode === "both")
         ) {
-          await prisma.$executeRaw`
-            INSERT INTO [dbo].[THSCodes]
-            (
-              [HS Code],
-              [Libelle HS Code],
-              [UploadKey],
-              [Entite],
-              [Session],
-              [Date Creation]
-            )
-            VALUES
-            (
-              ${item.HS_Code},
-              ${item.Description},
-              ${item.Row_Key || "IMPORT"},
-              0,
-              0,
-              SYSDATETIME()
-            )
-          `;
+           // Créer nouveau HS Code
+          await prisma.tHSCodes.create({
+            data: {
+              HS_Code: hsCode,
+              Libelle_HS_Code: description,
+              Session: Number(session.user.id),
+              Date_Creation: new Date(),
+            },
+          });
           created++;
         }
 
         /* ============================================================
            🔁 UPDATE 
         ============================================================ */
-        else if (
-          item.status === "existing" &&
+        if (
+          item.status === "existing" && item.existingId &&
           (mode === "update" || mode === "both")
         ) {
-          await prisma.$executeRaw`
-            UPDATE [dbo].[THSCodes]
-            SET
-              [Libelle HS Code] = ${item.Description},
-              [UploadKey] = ${item.Row_Key || "IMPORT"}
-            WHERE [ID HS Code] = ${item.existingId}
-          `;
+            // Mettre à jour HS Code existant
+          await prisma.tHSCodes.update({
+            where: { ID_HS_Code: item.existingId },
+            data: {
+              HS_Code: hsCode,
+              Libelle_HS_Code: description,
+            },
+          });
           updated++;
         }
 

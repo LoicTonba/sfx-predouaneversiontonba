@@ -6,7 +6,7 @@ import { ChevronRightIcon, TrashIcon, PencilIcon, MoreVerticalIcon } from "lucid
 import Link from "next/link";
 import { toast } from "sonner";
 import { useConfirm } from "@/hooks/use-confirm";
-import { deleteColisage } from "../../server/colisage-actions";
+import { deleteColisage } from "../../../colisages/server/colisage-actions";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,

@@ -4,8 +4,8 @@ import { useState } from "react";
 import { Button } from "../../../../components/ui/button";
 import { Upload, Download } from "lucide-react";
 import { toast } from "sonner";
-import { previewColisagesImport } from "../../server/colisage-actions";
-import { ColisageImportPreviewDialog } from "./colisage-import";
+import { previewColisagesImport } from "../../../colisages/server/colisage-actions";
+import { ColisageImportPreviewDialog } from "../../../colisages/ui/components/colisage-import";
 import { NewHscodeDialog } from "@/modules/hscode/ui/components/new-hscode-dialog";
 
 
@@ -62,12 +62,13 @@ export const ColisageImportDialog = ({ dossierId }: ColisageImportPreviewDialogP
     const XLSX = require("xlsx");
      const templateData = [
             {
-                "Row_Key": "LIGNE-001",
+                "UploadKey": "LIGNE-001",
                 "HS_Code": "123456",
                 "Descr": "Exemple de produit",
                 "Command_No": "CMD-001",
                 "Supplier_Name": "Nom du fournisseur",
                 "Invoice_No": "FACT-001",
+                "Item_No": "1",
                 "Currency": "XOF",
                 "Qty": 100,
                 "Unit_Prize": 25.50,
@@ -80,12 +81,13 @@ export const ColisageImportDialog = ({ dossierId }: ColisageImportPreviewDialogP
                 "Customer_Grouping": "Site Perenco"
             },
             {
-                "Row_Key": "LIGNE-002",
+                "UploadKey": "LIGNE-002",
                 "HS_Code": "654321",
                 "Descr": "Autre produit 100% DC",
                 "Command_No": "CMD-002",
                 "Supplier_Name": "Autre fournisseur",
                 "Invoice_No": "FACT-002",
+                "Item_No": "2",
                 "Currency": "XOF",
                 "Qty": 50,
                 "Unit_Prize": 45.00,
@@ -98,12 +100,13 @@ export const ColisageImportDialog = ({ dossierId }: ColisageImportPreviewDialogP
                 "Customer_Grouping": "Site Perenco"
             },
             {
-                "Row_Key": "LIGNE-003",
+                "UploadKey": "LIGNE-003",
                 "HS_Code": "789012",
                 "Descr": "Produit avec 30% DC",
                 "Command_No": "CMD-003",
                 "Supplier_Name": "Troisième fournisseur",
                 "Invoice_No": "FACT-003",
+                "Item_No": "3",
                 "Currency": "EUR",
                 "Qty": 75,
                 "Unit_Prize": 120.00,

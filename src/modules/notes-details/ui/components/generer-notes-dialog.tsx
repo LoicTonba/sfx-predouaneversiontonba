@@ -21,7 +21,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { checkConversionExists, genererNotesDetail, createMissingExchangeRates } from "../../server/note-detail-actions";
-import { MissingExchangeRatesDialog } from "./missing-exchange-rates-dialog";
+import { MissingExchangeRatesDialog } from "../../../dossiers/ui/components/missing-exchange-rates-dialog";
 
 interface GenererNotesDialogProps {
     open: boolean;

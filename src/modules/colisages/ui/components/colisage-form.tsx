@@ -22,7 +22,7 @@ import {
   getAllHscodesForSelect,
   getAllPaysForSelect,
   getAllRegimeDeclarationsForSelect,
-} from "../../server/colisage-actions";
+} from "../../../colisages/server/colisage-actions";
 import { toast } from "sonner";
 import { TColisageDossiers } from "@/generated/prisma/client";
 import { CommandSelect } from "../../../../components/command-select";

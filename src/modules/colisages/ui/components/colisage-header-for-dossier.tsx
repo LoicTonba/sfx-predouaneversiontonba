@@ -5,7 +5,7 @@ import { ScrollArea, ScrollBar } from "../../../../components/ui/scroll-area";
 import { PlusIcon, XCircleIcon, SearchIcon } from "lucide-react";
 import { useState } from "react";
 import { Input } from "../../../../components/ui/input";
-import { useColisageSearch } from "../../hooks/use-colisage-search";
+import { useColisageSearch } from "../../../colisages/hooks/use-colisage-search";
 // import { NewColisageDialog } from "./new-colisage-dialog";
 
 type ColisageHeaderProps = {

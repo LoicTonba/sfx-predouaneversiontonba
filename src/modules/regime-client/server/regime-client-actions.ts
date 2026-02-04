@@ -101,60 +101,32 @@ export async function associateRegimeToClient(clientId: number, regimeId: number
 
         const sessionId = parseInt(session.user.id);
 
-        // 1️⃣ Vérifier si l'association existe déjà
-        const existingAssociation = await prisma.$queryRaw<
-        { ID_Regime_Client: number }[]
-        >`
-        SELECT TOP 1 [ID Regime Client] AS ID_Regime_Client
-        FROM [dbo].[TRegimesClients]
-        WHERE [Client] = ${clientId}
-            AND [Regime Declaration] = ${regimeId}
-        `;
+        // Vérifier si l'association existe déjà
+        const existingAssociation = await prisma.tRegimesClients.findFirst({
+            where: {
+                Client: clientId,
+                Regime_Declaration: regimeId
+            }
+        });
 
-        if (existingAssociation.length > 0) {
+        if (existingAssociation) {
             return { success: false, error: "Cette association existe déjà" };
         }
 
-        // 2️⃣ Insertion SQL brute
-        await prisma.$executeRaw`
-        INSERT INTO [dbo].[TRegimesClients]
-            ([ID_Client], [ID_Regime_Declaration], [ID_Session], [Date_Creation])
-        VALUES
-            (${clientId}, ${regimeId}, ${sessionId}, SYSDATETIME())
-        `;
-
-        // 3️⃣ Relecture via VIEW (propre)
-        const created = await prisma.$queryRaw<
-        {
-            id: number;
-            clientId: number;
-            clientNom: string;
-            regimeId: number;
-            regimeLibelle: string;
-            tauxDC: number;
-            dateCreation: Date;
-            nomCreation: string;
-        }[]
-        >`
-        SELECT TOP 1
-            ID_Regime_Client        AS id,
-            ID_Client               AS clientId,
-            Nom_Client              AS clientNom,
-            ID_Regime_Declaration   AS regimeId,
-            Libelle_Regime_Declaration AS regimeLibelle,
-            Ratio_DC                AS tauxDC,
-            Date_Creation           AS dateCreation,
-            Nom_Creation            AS nomCreation
-        FROM [dbo].[VRegimesClients]
-        WHERE ID_Client = ${clientId}
-            AND ID_Regime_Declaration = ${regimeId}
-        ORDER BY ID_Regime_Client DESC
-        `;
+        // Créer l'association
+        const regimeClient = await prisma.tRegimesClients.create({
+            data: {
+                Client: clientId,
+                Regime_Declaration: regimeId,
+                Session: sessionId,
+                Date_Creation: new Date()
+            }
+        });
 
         revalidatePath("/client");
         return { 
             success: true, 
-            data: convertDecimalsToNumbers(created[0]) };
+            data: convertDecimalsToNumbers(regimeClient) };
     } catch (error) {
         console.error("associateRegimeToClient error:", error);
         return {
@@ -182,61 +154,33 @@ export async function createRegimeClient(data: { clientId: number; regimeId: num
 
         const sessionId = parseInt(session.user.id);
 
-        // 1️⃣ Vérifier si l'association existe déjà (SQL brut)
-        const existing = await prisma.$queryRaw<
-        { ID_Regime_Client: number }[]
-        >`
-        SELECT TOP 1 ID_Regime_Client AS ID_Regime_Client
-        FROM [dbo].[TRegimesClients]
-        WHERE ID_Client = ${data.clientId}
-            AND ID_Regime_Declaration = ${data.regimeId}
-        `;
+        // Vérifier si l'association existe déjà
+        const existingAssociation = await prisma.tRegimesClients.findFirst({
+            where: {
+                Client: data.clientId,
+                Regime_Declaration: data.regimeId
+            }
+        });
 
-        if (existing.length > 0) {
+        if (existingAssociation) {
             return { success: false, error: "Cette association existe déjà" };
         }
 
-        // 2️⃣ Insertion SQL brute
-        await prisma.$executeRaw`
-        INSERT INTO [dbo].[TRegimesClients]
-            ([ID_Client], [ID_Regime_Declaration], [ID_Session], [Date_Creation])
-        VALUES
-            (${data.clientId}, ${data.regimeId}, ${sessionId}, SYSDATETIME())
-        `;
-
-        // 3️⃣ Relecture via VIEW (propre, stable, typée)
-        const created = await prisma.$queryRaw<
-        {
-            id: number;
-            clientId: number;
-            clientNom: string;
-            regimeId: number;
-            regimeLibelle: string;
-            tauxDC: number;
-            dateCreation: Date;
-            nomCreation: string;
-        }[]
-        >`
-        SELECT TOP 1
-            ID_Regime_Client          AS id,
-            ID_Client                 AS clientId,
-            Nom_Client                AS clientNom,
-            ID_Regime_Declaration     AS regimeId,
-            Libelle_Regime_Declaration AS regimeLibelle,
-            Ratio_DC                  AS tauxDC,
-            Date_Creation             AS dateCreation,
-            Nom_Creation              AS nomCreation
-        FROM [dbo].[VRegimesClients]
-        WHERE ID_Client = ${data.clientId}
-            AND ID_Regime_Declaration = ${data.regimeId}
-        ORDER BY ID_Regime_Client DESC
-        `;
+        // Créer l'association
+        const regimeClient = await prisma.tRegimesClients.create({
+            data: {
+                Client: data.clientId,
+                Regime_Declaration: data.regimeId,
+                Session: sessionId,
+                Date_Creation: new Date()
+            }
+        });
 
         revalidatePath("/client");
 
         return { 
             success: true, 
-            data: convertDecimalsToNumbers(created[0]) };
+            data: convertDecimalsToNumbers(regimeClient) };
     } catch (error) {
         console.error("createRegimeClient error:", error);
         return {

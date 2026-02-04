@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import {  useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,7 @@ import { useRouter } from "next/navigation";
 
 
 interface ColisagePreviewItem {
-  Row_Key: string;
+  UploadKey: string;
   HS_Code: number;
   Description_Colis: string;
   No_Commande: string;
@@ -32,7 +32,7 @@ interface ColisagePreviewItem {
   Devise: string;
   Qte_Colis: number;
   No_Article: number;
-  Prix_Unitaire_Facture: number;
+  Prix_Unitaire_Colis: number;
   Poids_Brut: number;
   Poids_Net: number;
   Volume: number;
@@ -67,42 +67,45 @@ export const ColisageImportPreviewDialog = ({
   dossierId,
 }: ColisageImportPreviewDialogProps) => {
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
-  
   const [isImporting, setIsImporting] = useState(false);
   const [updateExisting, setUpdateExisting] = useState(false);
+
   const router = useRouter();
 
 
-  // Initialize selection when preview data changes
-  useState(() => {
-    if (previewData) {
-      setSelectedRows(new Set(previewData.preview.map((_, idx) => idx)));
-    }
-  });
+  /**
+   * Sélection automatique de toutes les lignes
+   * quand un nouvel aperçu est reçu
+   */
+  useEffect(() => {
+      if (previewData?.preview) {
+        setSelectedRows(
+          new Set(previewData.preview.map((_, index) => index))
+        );
+      }
+    }, [previewData]);
 
   if (!previewData) return null;
 
-  const toggleRow = (index: number) => {
-    const newSelected = new Set(selectedRows);
-    if (newSelected.has(index)) {
-      newSelected.delete(index);
-    } else {
-      newSelected.add(index);
-    }
-    setSelectedRows(newSelected);
+ const toggleRow = (index: number) => {
+    setSelectedRows((prev) => {
+      const next = new Set(prev);
+      next.has(index) ? next.delete(index) : next.add(index);
+      return next;
+    });
   };
 
   const toggleAll = () => {
     if (selectedRows.size === previewData.preview.length) {
       setSelectedRows(new Set());
     } else {
-      setSelectedRows(new Set(previewData.preview.map((_, idx) => idx)));
+      setSelectedRows(new Set(previewData.preview.map((_, index) => index)));
     }
   };
 
   const handleImport = async () => {
     
-    const rowsToImport = previewData.preview.filter((_, idx) => selectedRows.has(idx));
+    const rowsToImport = previewData.preview.filter((_, index) => selectedRows.has(index));
     
     console.log("Rows to import:", rowsToImport);
     if (rowsToImport.length === 0) {
@@ -114,9 +117,8 @@ export const ColisageImportPreviewDialog = ({
 
     try {
     
-      // Déterminer le mode selon la checkbox et les données
-      const mode = updateExisting ? 'both' : 'create';
-      const result = await importSelectedColisages(dossierId, rowsToImport);
+      // Passer le paramètre updateExisting à la fonction d'import
+      const result = await importSelectedColisages(dossierId, rowsToImport, updateExisting);
       
       console.log("Import result:", result);
 
@@ -127,13 +129,11 @@ export const ColisageImportPreviewDialog = ({
         return;
       }
      
+      const created = result.data?.created ?? 0;
 
-      if (result.data) {
-        const { created, updated } = result.data; 
-        toast.success(`${created} créé(s), ${updated} mis à jour`);
-        router.refresh();
-        onOpenChange(false);
-      }
+      toast.success(`${created} colisage(s) importé(s) avec succès`);
+      router.refresh();
+      onOpenChange(false);
     } catch (err) {
       toast.error("Erreur lors de l'import");
       console.error(err);
@@ -145,10 +145,10 @@ export const ColisageImportPreviewDialog = ({
 
   const selectedCount = selectedRows.size;
   const newCount = previewData.preview.filter(
-    (row, idx) => selectedRows.has(idx) && row.status === 'new'
+    (row, index) => selectedRows.has(index) && row.status === 'new'
   ).length;
   const existingCount = previewData.preview.filter(
-    (row, idx) => selectedRows.has(idx) && row.status === 'existing'
+    (row, index) => selectedRows.has(index) && row.status === 'existing'
   ).length;
 
   return (
@@ -177,7 +177,7 @@ export const ColisageImportPreviewDialog = ({
             <div className="flex items-center gap-2">
               <Checkbox
                 checked={updateExisting}
-                onCheckedChange={(checked) => setUpdateExisting(!!checked)}
+                onCheckedChange={(checked) => setUpdateExisting(Boolean(checked))}
               />
               <span className="text-sm">Mettre à jour les existants</span>
             </div>
@@ -212,27 +212,27 @@ export const ColisageImportPreviewDialog = ({
 
         <ScrollArea className="h-[500px] pr-4">
           <div className="space-y-2">
-            {previewData.preview.map((row, idx) => {
+            {previewData.preview.map((row, index) => {
               const isExisting = row.status === 'existing';
-              const isSelected = selectedRows.has(idx);
+              const isSelected = selectedRows.has(index);
 
               return (
                 <div
-                  key={idx}
+                  key={row.UploadKey}
                   className={`flex items-start gap-3 p-3 border rounded-lg transition-colors ${
                     isSelected ? "bg-accent/50" : "bg-background"
                   } ${isExisting ? "border-orange-300" : "border-border"}`}
                 >
                   <Checkbox
                     checked={isSelected}
-                    onCheckedChange={() => toggleRow(idx)}
+                    onCheckedChange={() => toggleRow(index)}
                     className="mt-1"
                   />
 
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs text-muted-foreground">
-                        {row.Row_Key}
+                        {row.UploadKey}
                       </span>
                       {isExisting && (
                         <Badge variant="outline" className="text-xs border-orange-500 text-orange-600">

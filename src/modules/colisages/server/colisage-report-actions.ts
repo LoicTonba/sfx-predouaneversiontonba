@@ -60,11 +60,11 @@ export async function getColisageReportData(dossierId: number) {
             select: {
                 ID_Dossier: true,              // ID unique du dossier
                 No_Dossier: true,               // Numéro de dossier (référence client)
-                No_OT: true,                    // Numéro d'ordre de travail
+                No_OT: true,                    // Numéro d'ordre de transit
                 Nom_Client: true,               // Nom du client
                 Description_Dossier: true,       // Description du contenu du dossier
-                Nom_Branche: true,               // Nom de la branche (division)
-                Nom_Entite: true,                // Nom de l'entité (société)
+                Nom_Branche: true,               // Nom de la branche (filiale de la société)
+                Nom_Entite: true,                // Nom de l'entité (pays de la société)
             }
         });
 
@@ -145,10 +145,10 @@ export async function getColisageReportData(dossierId: number) {
         const dossierInfo = {
             id: dossier.ID_Dossier,                    // ID du dossier
             noDossier: dossier.No_Dossier,             // Numéro de référence du dossier
-            noOT: dossier.No_OT,                       // Numéro d'ordre de travail
+            noOT: dossier.No_OT,                       // Numéro d'ordre de transit
             nomClient: dossier.Nom_Client,              // Nom du client
             descriptionDossier: dossier.Description_Dossier, // Description du contenu
-            nomBranche: dossier.Nom_Branche,           // Nom de la branche
+            nomBranche: dossier.Nom_Branche,           // Nom de la branche/filiale
             nomEntite: dossier.Nom_Entite,              // Nom de l'entité/société
         };
 

@@ -67,11 +67,6 @@ export const ClientView = ({ client, total = 0, currentPage = DEFAULT_PAGE }: Pr
         />
       )}
 
-      <DataPagination
-        page={page}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-      />
       {filteredClients?.length === 0 && (
         <EmptyState
           title={search ? "Aucun client trouvé" : "Creer votre premier Client"}

@@ -16,7 +16,7 @@
 import { useState } from 'react';  // Hook d'état React
 import { toast } from 'sonner';  // Système de notifications toast
 import { getColisageReportData } from '../server/colisage-report-actions';  // Action serveur pour récupérer les données
-import { ColisagePDFReportV2 } from '../services/colisage-pdf-report-v2';  // Service de génération PDF V2
+import { ColisagePDFReportV2 } from '../../dossiers/services/colisage-pdf-report-v2';  // Service de génération PDF V2
 
 /**
  * ============================================================================

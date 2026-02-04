@@ -12,13 +12,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2, Trash2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { deleteColisage } from "../../server/colisage-actions";
+import { deleteColisage, deleteAllColisagesByDossierId } from "../../../colisages/server/colisage-actions";
 
 interface DeleteAllColisagesDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     colisages: any[];
     selectedRows?: any[];
+    dossierId?: number;  // ID du dossier pour suppression en masse
     onSuccess: () => void;
 }
 

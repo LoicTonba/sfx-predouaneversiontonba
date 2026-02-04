@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getColisagesDossier } from "../../server/colisage-actions";
+import { getColisagesDossier } from "../../../colisages/server/colisage-actions";
 import { LoadingState } from "@/components/loading-state";
 import { EmptyState } from "@/components/empty-state";
 import { DataTable } from "@/components/data-table";
@@ -14,8 +14,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
 import { CreateColisageDialog } from "./create-colisage-dialog";
 import { DeleteAllColisagesDialog } from "./delete-all-colisages-dialog";
-import { deleteColisage } from "../../server/colisage-actions";
-import { useColisagePDFReport } from "../../hooks/use-colisage-pdf-report";
+import { deleteColisage } from "../../../colisages/server/colisage-actions";
+import { useColisagePDFReport } from "../../../colisages/hooks/use-colisage-pdf-report";
 
 interface ColisageListForDossierProps {
     dossierId: number;

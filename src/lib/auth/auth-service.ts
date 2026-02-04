@@ -68,8 +68,8 @@ export async function getUserById(userId: number): Promise<AuthUser | null> {
         where: {
             Utilisateur: userId,
             Fin_Session: {
-                equals: new Date('1900-01-01') // ou une autre valeur par défaut qui représente "pas terminé"
-            }
+                equals: prisma.tSessions.fields.Debut_Session
+            },
         },
         orderBy: {
             Debut_Session: 'desc',
