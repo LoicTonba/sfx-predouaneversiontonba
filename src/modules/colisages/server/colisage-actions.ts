@@ -717,13 +717,252 @@ export interface ImportColisageRowNormalized {
 }
 
 /**
+ * ============================================================================
+ * FONCTION : validateAndDetectMissing
+ * ============================================================================
+ * Rôle global : Valide les données et détecte les valeurs manquantes dans la base de données.
+ * 
+ * Paramètres :
+ * @param rows - Lignes parsées et normalisées
+ * @param clientId - ID du client pour créer les associations
+ * 
+ * Retour : Objet { devises, pays, hscodes, regimes, unassociatedRegimes }
+ * ============================================================================
+ */
+async function validateAndDetectMissing(rows: any[], clientId: number) {
+    const missingDevises: string[] = [];
+    const missingPays: string[] = [];
+    const missingHscodes: string[] = [];
+    const missingRegimes: Array<{ code: string; ratio: number }> = [];
+    const unassociatedRegimes: Array<{ code: string; ratio: number; libelle: string }> = [];
+
+    // Extraire les valeurs distinctes
+    const distinctDevises = [...new Set(rows.map(r => r.devise).filter(Boolean))];
+    const distinctPays = [...new Set(rows.map(r => r.paysOrigine).filter(Boolean))];
+    // Convertir les HS codes en strings pour la comparaison, mapper "0" vers "-"
+    const distinctHscodes = [...new Set(rows.map(r => r.hscode).filter(h => h !== null && h !== undefined).map(h => {
+        const hsCode = String(h);
+        return hsCode === '0' ? '-' : hsCode; // Mapper "0" vers "-" qui correspond à l'ID 0
+    }))];
+
+    // Vérifier les devises
+    if (distinctDevises.length > 0) {
+        const foundDevises = await prisma.vDevises.findMany({
+            where: { Code_Devise: { in: distinctDevises } },
+            select: { Code_Devise: true }
+        });
+        const foundDevisesCodes = new Set(foundDevises.map(d => d.Code_Devise));
+        missingDevises.push(...distinctDevises.filter(d => !foundDevisesCodes.has(d)));
+    }
+
+    // Vérifier les pays
+    if (distinctPays.length > 0) {
+        const foundPays = await prisma.vPays.findMany({
+            where: { Code_Pays: { in: distinctPays } },
+            select: { Code_Pays: true }
+        });
+        const foundPaysCodes = new Set(foundPays.map(p => p.Code_Pays));
+        const missingPaysFound = distinctPays.filter(p => !foundPaysCodes.has(p));
+        missingPays.push(...missingPaysFound);
+    }
+
+    // Vérifier les HS Codes
+    if (distinctHscodes.length > 0) {
+        console.log('🔍 [validateAndDetectMissing] Vérification HS Codes:', distinctHscodes);
+        
+        const foundHscodes = await prisma.vHSCodes.findMany({
+            where: { 
+                OR: [
+                    { HS_Code: { in: distinctHscodes } },
+                    { ID_HS_Code: 0 } // Inclure explicitement l'ID 0
+                ]
+            },
+            select: { HS_Code: true }
+        });
+        
+        console.log('📊 [validateAndDetectMissing] HS Codes trouvés:', foundHscodes);
+        
+        const foundHscodesCodes = new Set(foundHscodes.map(h => h.HS_Code));
+        const missingHscodesFound = distinctHscodes.filter(h => !foundHscodesCodes.has(h));
+        
+        console.log('✅ [validateAndDetectMissing] HS Codes trouvés:', Array.from(foundHscodesCodes));
+        console.log('❌ [validateAndDetectMissing] HS Codes manquants:', missingHscodesFound);
+        
+        missingHscodes.push(...missingHscodesFound);
+    }
+
+    // Vérifier les régimes (seulement si fournis)
+    const rowsWithRegime = rows.filter(r => r.regimeRatio !== null && r.regimeRatio !== undefined);
+    if (rowsWithRegime.length > 0) {
+        const distinctRegimes = [...new Set(rowsWithRegime.map(r => {
+            const ratio = typeof r.regimeRatio === 'string' ? parseFloat(r.regimeRatio) : r.regimeRatio;
+            return (ratio / 100).toFixed(4); // Utiliser toFixed pour éviter les problèmes de précision
+        }))];
+
+        console.log('🔍 [validateAndDetectMissing] Client ID:', clientId);
+        console.log('🔍 [validateAndDetectMissing] Régimes distincts à vérifier:', distinctRegimes);
+
+        console.log('🔍 [validateAndDetectMissing] Client ID:', clientId);
+        console.log('🔍 [validateAndDetectMissing] Régimes distincts à vérifier:', distinctRegimes);
+
+        // Récupérer les associations client-régime pour ce client
+        const clientRegimeAssociations = await prisma.tRegimesClients.findMany({
+            where: { Client: clientId },
+            include: {
+                TRegimesDeclarations: {
+                    select: {
+                        ID_Regime_Declaration: true,
+                        Libelle_Regime_Declaration: true,
+                        Taux_DC: true,
+                        Regime_Douanier: true
+                    }
+                }
+            }
+        });
+        
+        // Filtrer seulement les régimes douaniers 0
+        const filteredAssociations = clientRegimeAssociations.filter(assoc => 
+            assoc.TRegimesDeclarations && assoc.TRegimesDeclarations.Regime_Douanier === 0
+        );
+        
+        console.log('🔍 [validateAndDetectMissing] Associations manuelles trouvées:', filteredAssociations);
+        
+        // Créer un Set des taux DC disponibles pour ce client
+        const availableRegimeTaux = new Set(
+            filteredAssociations
+                .filter(assoc => assoc.TRegimesDeclarations)
+                .map(assoc => parseFloat(assoc.TRegimesDeclarations!.Taux_DC.toString()).toFixed(4))
+        );
+        
+        console.log('✅ [validateAndDetectMissing] Régimes trouvés et associés:', Array.from(availableRegimeTaux));
+        
+        // Pour chaque régime demandé, vérifier s'il existe et s'il est associé
+        for (const row of rowsWithRegime) {
+            const ratio = typeof row.regimeRatio === 'string' ? parseFloat(row.regimeRatio) : row.regimeRatio;
+            const decimal = (ratio / 100).toFixed(4); // Normaliser à 4 décimales
+            
+            console.log(`🔍 [validateAndDetectMissing] Vérification régime ${ratio}% (${decimal})`);
+            
+            if (!availableRegimeTaux.has(decimal)) {
+                console.log(`❌ [validateAndDetectMissing] Régime ${ratio}% non trouvé dans les associations client`);
+                
+                // Le régime n'est pas trouvé pour ce client
+                // Vérifier s'il existe dans la base mais n'est pas associé
+                let libelle: string;
+                if (ratio === 0) {
+                    libelle = 'EXO';
+                } else if (ratio === 100) {
+                    libelle = '100% DC';
+                } else {
+                    const dcPercent = Math.round(ratio * 100) / 100;
+                    const trPercent = Math.round((100 - ratio) * 100) / 100;
+                    // Générer le libellé sans préfixe pour correspondre à la BD
+                    libelle = `${trPercent.toFixed(2)}% TR et ${dcPercent.toFixed(2)}% DC`;
+                }
+
+                console.log(`📝 [validateAndDetectMissing] Libellé généré: "${libelle}"`);
+
+                // Chercher le régime avec différents formats possibles
+                const regimeExists = await prisma.tRegimesDeclarations.findFirst({
+                    where: {
+                        OR: [
+                            { Libelle_Regime_Declaration: libelle },
+                            // Essayer aussi avec le format avec préfixe
+                            { Libelle_Regime_Declaration: `${row.regimeCode || 'IM4'} ${libelle}` },
+                            // Essayer avec le taux DC directement
+                            { Taux_DC: ratio / 100 },
+                        ]
+                    }
+                });
+
+                console.log(`🔍 [validateAndDetectMissing] Régime trouvé en BD:`, regimeExists);
+
+                if (regimeExists) {
+                    // Le régime existe mais n'est pas associé au client
+                    const alreadyAdded = unassociatedRegimes.find(r => r.ratio === ratio);
+                    if (!alreadyAdded) {
+                        unassociatedRegimes.push({ 
+                            code: row.regimeCode || 'IM4', 
+                            ratio,
+                            libelle: regimeExists.Libelle_Regime_Declaration
+                        });
+                        console.log(`🔗 [validateAndDetectMissing] Régime non associé ajouté: ${ratio}%`);
+                    }
+                } else {
+                    // Le régime n'existe pas du tout
+                    const alreadyAdded = missingRegimes.find(m => m.ratio === ratio);
+                    if (!alreadyAdded) {
+                        missingRegimes.push({ 
+                            code: row.regimeCode || 'IM4', 
+                            ratio,
+                        });
+                        console.log(`❌ [validateAndDetectMissing] Régime manquant ajouté: ${ratio}%`);
+                    }
+                }
+            } else {
+                console.log(`✅ [validateAndDetectMissing] Régime ${ratio}% OK (trouvé dans les associations client)`);
+            }
+        }
+    }
+
+    const result = {
+        devises: missingDevises,
+        pays: missingPays,
+        hscodes: missingHscodes,
+        regimes: missingRegimes,
+        unassociatedRegimes, // Régimes existants mais non associés au client
+    };
+
+    console.log('📋 [validateAndDetectMissing] Résultat final:', result);
+
+    return result;
+}
+
+/**
+ * Vérifie les rowKeys existants dans un dossier
+ */
+export async function checkExistingRowKeys(dossierId: number, rowKeys: string[]) {
+    try {
+        const session = await auth.api.getSession({
+            headers: await headers(),
+        });
+
+        if (!session) {
+            throw new Error("Missing User Session");
+        }
+
+        const existingColisages = await prisma.tColisageDossiers.findMany({
+            where: {
+                Dossier: dossierId,
+                UploadKey: {
+                    in: rowKeys.filter(Boolean),
+                },
+            },
+            select: {
+                ID_Colisage_Dossier: true,
+                UploadKey: true,
+                Description_Colis: true,
+            },
+        });
+
+        return {
+            success: true,
+            data: existingColisages,
+        };
+    } catch (error) {
+        console.error("checkExistingRowKeys error:", error);
+        return { success: false, error: error instanceof Error ? error.message : "Erreur lors de la vérification" };
+    }
+}
+
+/**
  * Vérifie si un colisage existe déjà dans la base de données
  * Utilise les colonnes de l'index unique: (No_Facture, Nom_Fournisseur, Item_No, No_Commande)
  */
 export async function checkColisageExists(dossierId: number, item: any) {
   try {
     // Vérifier sur les colonnes de l'index unique + Dossier
-    const existing = await prisma.tColisageDossiers.findMany({
+    const existingColisages = await prisma.tColisageDossiers.findMany({
       where: {
         Dossier: dossierId,
         No_Facture: item.No_Facture || "",
@@ -734,11 +973,11 @@ export async function checkColisageExists(dossierId: number, item: any) {
       take: 1,
     });
     
-    if (existing.length > 0) {
+    if (existingColisages.length > 0) {
       console.log(`🔍 Colisage existant trouvé: Facture=${item.No_Facture}, Fournisseur=${item.Nom_Fournisseur}, Article=${item.No_Article}, Commande=${item.No_Commande}`);
     }
     
-    return existing.length > 0 ? existing[0] : null;
+    return existingColisages.length > 0 ? existingColisages[0] : null;
   } catch (error) {
     console.error("checkColisageExists error:", error);
     return null;

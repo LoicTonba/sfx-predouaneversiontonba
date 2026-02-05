@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { cleanupAllRegimes } from "../../server/cleanup-actions";
+import { cleanupAllRegimes } from "../../../clients/server/cleanup-actions";
 
 export const CleanupButton = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +39,7 @@ export const CleanupButton = () => {
             className="mb-4"
         >
             <Trash2 className="h-4 w-4 mr-2" />
-            {isLoading ? "Nettoyage..." : "🧹 Nettoyer toutes les associations"}
+            {isLoading ? "Suppression..." : "Supprimer toutes les associations"}
         </Button>
     );
 };

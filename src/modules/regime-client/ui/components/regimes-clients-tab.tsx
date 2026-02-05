@@ -10,10 +10,10 @@ import { Plus, Trash2, Filter, X } from "lucide-react";
 import { toast } from "sonner";
 import { ColumnDef } from "@tanstack/react-table";
 import { CreateRegimeClientDialog } from "./create-regime-client-dialog";
-import { FilterClientDialog } from "./filter-client-dialog";
+import { FilterClientDialog } from "../../../clients/ui/components/filter-client-dialog";
 import { CleanupButton } from "./cleanup-button";
 import { useConfirm } from "@/hooks/use-confirm";
-import { getRegimesClients, deleteRegimeClient } from "../../../regime-client/server/regime-client-actions";
+import { getRegimesClients, deleteRegimeClient } from "../../server/regime-client-actions";
 
 interface RegimeClient {
     id: number;

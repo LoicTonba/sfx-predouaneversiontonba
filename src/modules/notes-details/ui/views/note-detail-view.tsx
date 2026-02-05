@@ -103,9 +103,8 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                 "Régime": note.Regime || "",
                 "Pays d'origine": note.Pays_Origine || "",
                 "HS Code": note.HS_Code || "",
-                "Quantité": Number(note.Qte_Colis),
-                "Prix Unitaire": Number(note.Prix_Unitaire_Colis),
-                "Prix Total": Number(note.Qte_Colis) * Number(note.Prix_Unitaire_Colis),
+                "Nbre Paquetage": Number(note.Nbre_Paquetage || 0),
+                "Valeur": Number(note.Valeur || 0),
                 "Volume (m³)": Number(note.Volume),
                 "Poids Brut (kg)": Number(note.Poids_Brut || 0),
                 "Poids Net (kg)": Number(note.Poids_Net || 0),
@@ -121,9 +120,8 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                 { wch: 10 }, // Régime
                 { wch: 20 }, // Pays d'origine
                 { wch: 15 }, // HS Code
-                { wch: 12 }, // Quantité
-                { wch: 12 }, // Prix Unitaire
-                { wch: 15 }, // Prix Total
+                { wch: 12 }, // Nbre Paquetage
+                { wch: 12 }, // Valeur
                 { wch: 12 }, // Volume
                 { wch: 12 }, // Poids Brut
                 { wch: 12 }, // Poids Net
@@ -141,7 +139,7 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
         try {
             const headers = [
                 "Groupement", "Régime Déclaration", "Régime", 
-                "Pays d'origine", "HS Code", "Quantité", "Prix Unitaire", "Prix Total", "Volume (m³)", "Poids Brut (kg)", "Poids Net (kg)"
+                "Pays d'origine", "HS Code", "Nbre Paquetage", "Valeur", "Volume (m³)", "Poids Brut (kg)", "Poids Net (kg)"
             ];
 
             const rows = notes.map((note) => [
@@ -150,9 +148,8 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                 note.Regime || "",
                 `"${(note.Pays_Origine || "").replace(/"/g, '""')}"`,
                 note.HS_Code || "",
-                Number(note.Qte_Colis),
-                Number(note.Prix_Unitaire_Colis),
-                Number(note.Qte_Colis) * Number(note.Prix_Unitaire_Colis),
+                Number(note.Nbre_Paquetage || 0),
+                Number(note.Valeur || 0),
                 Number(note.Volume),
                 Number(note.Poids_Brut || 0),
                 Number(note.Poids_Net || 0),
@@ -200,7 +197,7 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
 
             // Essayer d'ajouter le logo PNG
             try {
-                const logoResponse = await fetch('/logo.png');
+                const logoResponse = await fetch('/logo.jpeg');
                 if (logoResponse.ok) {
                     const logoBlob = await logoResponse.blob();
                     const logoBase64 = await new Promise<string>((resolve) => {
@@ -210,18 +207,8 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                     });
                     
                     // Ajouter le logo (ajuster la taille selon le logo)
-                    doc.addImage(logoBase64, 'PNG', 16, 10, 20, 20);
+                    doc.addImage(logoBase64, 'JPEG', 16, 10, 20, 20);
                     
-                    // Nom de l'entreprise à côté du logo
-                    doc.setFontSize(16);
-                    doc.setFont('helvetica', 'bold');
-                    doc.setTextColor(245, 158, 66);
-                    doc.text('SFX PRE-DOUANE', 42, 18);
-                    
-                    doc.setFontSize(10);
-                    doc.setFont('helvetica', 'normal');
-                    doc.setTextColor(100, 100, 100);
-                    doc.text('Solutions de déclaration dans CAMCIS', 42, 24);
                 } else {
                     throw new Error('Logo non trouvé');
                 }
@@ -264,19 +251,14 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                 minute: '2-digit' 
             })}`, 220, 25);
 
-            // === DESCRIPTION ===
-            doc.setFontSize(11);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(60, 60, 60);
-            doc.text('Ce document présente le détail des colisages validés pour intégration dans le système CAMSIS.', 14, 38);
-            doc.text('Toutes les informations ont été vérifiées et sont prêtes pour la déclaration douanière.', 14, 43);
-
             // === STATISTIQUES DANS UN ENCADRÉ ===
             const dcCount = notes.filter(n => n.Regime === "DC").length;
             const trCount = notes.filter(n => n.Regime === "TR").length;
+            const exoCount = notes.filter(n => n.Regime === "EXO").length;
             const totalPoids = notes.reduce((sum, n) => sum + Number(n.Poids_Brut || 0), 0);
             const totalVolume = notes.reduce((sum, n) => sum + Number(n.Volume || 0), 0);
-            const totalValeur = notes.reduce((sum, n) => sum + (Number(n.Qte_Colis) * Number(n.Prix_Unitaire_Colis)), 0);
+            const totalValeur = notes.reduce((sum, n) => sum + Number(n.Valeur || 0), 0);
+            const totalNbrePaquetage = notes.reduce((sum, n) => sum + Number(n.Nbre_Paquetage || 0), 0);
 
             // Encadré pour les statistiques
             doc.setFillColor(248, 249, 250);
@@ -293,9 +275,11 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
             doc.text(`• Total lignes: ${notes.length}`, 16, 57);
             doc.text(`• Régime DC: ${dcCount}`, 70, 57);
             doc.text(`• Régime TR: ${trCount}`, 120, 57);
-            doc.text(`• Poids total: ${totalPoids.toFixed(2)} kg`, 170, 57);
-            doc.text(`• Volume total: ${totalVolume.toFixed(2)} m³`, 16, 61);
-            doc.text(`• Valeur totale: ${totalValeur.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}`, 120, 61);
+            doc.text(`• Régime EXO: ${exoCount}`, 170, 57);
+            doc.text(`• Paquetages: ${totalNbrePaquetage.toFixed(2)}`, 220, 57);
+            doc.text(`• Poids total: ${totalPoids.toFixed(2)} kg`, 16, 61);
+            doc.text(`• Volume total: ${totalVolume.toFixed(2)} m³`, 70, 61);
+            doc.text(`• Valeur totale: ${totalValeur.toFixed(2)} `, 120, 61);
 
             const tableData = notes.map((note) => [
                 (note.Regroupement_Client || "").substring(0, 15),
@@ -303,13 +287,11 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                 (note.Pays_Origine || "").substring(0, 15),
                 note.HS_Code || "",
                 note.Regime || "",
-                Number(note.Qte_Colis).toFixed(2),
-                Number(note.Prix_Unitaire_Colis).toFixed(2),
-                (Number(note.Qte_Colis) * Number(note.Prix_Unitaire_Colis)).toFixed(2),
+                Number(note.Nbre_Paquetage).toFixed(2),
+                Number(note.Valeur).toFixed(2),
                 Number(note.Volume).toFixed(2),
                 Number(note.Poids_Brut || 0).toFixed(2),
                 Number(note.Poids_Net || 0).toFixed(2),
-                Number(note.Nbre_Paquetage || 0).toFixed(0),
             ]);
 
             // === TABLEAU DES DONNÉES ===
@@ -322,7 +304,7 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                 startY: 68,
                 margin: { left: marginLeft, right: marginRight },
                 tableWidth: availableWidth,
-                head: [["Groupement", "Régime Décl.", "Pays D'origine", "HS Code", "" ,"Qté", "Prix Unit.", "Prix Total", "Volume", "Poids Brut", "Poids Net", "Nbre Paquetage"]],
+                head: [["Groupement", "Régime Décl.", "Pays D'origine", "HS Code", "" ,"Nbre Paq.", "Valeur", "Volume", "Poids Brut", "Poids Net"]],
                 body: tableData,
                 styles: { 
                     fontSize: 8,
@@ -343,13 +325,11 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                 columnStyles: {
                     2: { halign: 'center' }, // Régime
                     4: { halign: 'center' }, // HS Code
-                    5: { halign: 'right' }, // Qté
-                    6: { halign: 'right' }, // Prix Unit.
-                    7: { halign: 'right' }, // Prix Total
-                    8: { halign: 'right' }, // Volume
-                    9: { halign: 'right' }, // Poids Brut
-                    10: { halign: 'right' }, // Poids Net
-                    11: { halign: 'right' }, // Nbre Paquetage
+                    5: { halign: 'right' }, // Nbre Paquetage
+                    6: { halign: 'right' }, // Valeur
+                    7: { halign: 'right' }, // Volume
+                    8: { halign: 'right' }, // Poids Brut
+                    9: { halign: 'right' }, // Poids Net
                 },
             });
 
@@ -446,22 +426,22 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                 );
             },
         },
-        // 6. Quantité
+         // 6. Nombre de Paquetages
         {
-            accessorKey: "Qte_Colis",
-            header: "Quantité",
+            accessorKey: "Nbre_Paquetage",
+            header: "Nbre Paquetage",
             cell: ({ row }) => {
-                const qte = row.getValue("Qte_Colis") as number;
-                return Number(qte).toFixed(2);
+                const nbre = row.getValue("Nbre_Paquetage") as number;
+                return Number(nbre || 0).toFixed(2);
             },
         },
-        // 7. Prix
+          // 7. Valeur
         {
-            accessorKey: "Prix_Unitaire_Colis",
-            header: "Prix",
+            accessorKey: "Valeur",
+            header: "Valeur",
             cell: ({ row }) => {
-                const prix = row.getValue("Prix_Unitaire_Colis") as number;
-                return Number(prix).toFixed(2);
+                const valeur = row.getValue("Valeur") as number;
+                return Number(valeur || 0).toFixed(2);
             },
         },
         // 8. Volume
@@ -473,22 +453,7 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                 return `${Number(vol).toFixed(2)} m³`;
             },
         },
-        // 9. Prix Total (Quantité × Prix Unitaire)
-        {
-            id: "prixTotal",
-            header: "Prix Total",
-            cell: ({ row }) => {
-                const qte = Number(row.getValue("Qte_Colis") || 0);
-                const prix = Number(row.getValue("Prix_Unitaire_Colis") || 0);
-                const total = qte * prix;
-                return (
-                    <div className="font-semibold text-green-700">
-                        {total.toFixed(2)}
-                    </div>
-                );
-            },
-        },
-        // 10. Poids Brut
+        // 9. Poids Brut
         {
             accessorKey: "Poids_Brut",
             header: "Poids Brut",
@@ -497,22 +462,13 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                 return `${Number(poids || 0).toFixed(2)} kg`;
             },
         },
-        // 11. Poids Net
+        // 10. Poids Net
         {
             accessorKey: "Poids_Net",
             header: "Poids Net",
             cell: ({ row }) => {
                 const poids = row.getValue("Poids_Net") as number;
                 return `${Number(poids || 0).toFixed(2)} kg`;
-            },
-        },
-        // 12. Nombre de Paquetages
-        {
-            accessorKey: "Nbre_Paquetage",
-            header: "Nbre Paquetage",
-            cell: ({ row }) => {
-                const nbre = row.getValue("Nbre_Paquetage") as number;
-                return Number(nbre || 0).toFixed(0);
             },
         },
     ];
@@ -658,7 +614,7 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                                 <div>
                                     <p className="text-sm text-muted-foreground">Valeur Totale</p>
                                     <p className="text-2xl font-bold text-green-600">
-                                        {notes.reduce((sum, n) => sum + (Number(n.Qte_Colis || 0) * Number(n.Prix_Unitaire_Colis || 0)), 0).toFixed(2)}
+                                        {notes.reduce((sum, n) => sum + Number(n.Valeur || 0), 0).toFixed(2)} €
                                     </p>
                                 </div>
                             </div>

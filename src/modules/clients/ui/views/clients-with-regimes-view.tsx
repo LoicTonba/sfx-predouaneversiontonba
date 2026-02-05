@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClientsListTab } from "../components/clients-list-tab";
-import { RegimesClientsTab } from "../components/regimes-clients-tab";
+import { RegimesClientsTab } from "../../../regime-client/ui/components/regimes-clients-tab";
 
 interface ClientsWithRegimesViewProps {
     currentPage: number;
