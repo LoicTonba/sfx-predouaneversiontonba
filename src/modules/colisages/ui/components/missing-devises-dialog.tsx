@@ -15,49 +15,47 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
-import { CreatePaysDialogForm } from "./create-pays-dialog";
+import { CreateDeviseDialogForm } from "../../../dossiers/ui/components/create-devise-dialog";
 
-interface MissingPaysDialogProps {
+interface MissingDevisesDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    missingPays: string[];
+    missingDevises: string[];
     onContinue: () => void;
     onCancel: () => void;
 }
 
-export const MissingPaysDialog = ({
+export const MissingDevisesDialog = ({
     open,
     onOpenChange,
-    missingPays: initialMissingPays,
+    missingDevises: initialMissingDevises,
     onContinue,
     onCancel,
-}: MissingPaysDialogProps) => {
-
-    const [missingPays, setMissingPays] = useState<string[]>(initialMissingPays);
+}: MissingDevisesDialogProps) => {
+    const [missingDevises, setMissingDevises] = useState<string[]>(initialMissingDevises);
     const [showCreateDialog, setShowCreateDialog] = useState(false);
-    const [selectedPays, setSelectedPays] = useState<string>("");
+    const [selectedDevise, setSelectedDevise] = useState<string>("");
 
     // Synchroniser le state local avec les props
     useEffect(() => {
+        setMissingDevises(initialMissingDevises);
+    }, [initialMissingDevises]);
 
-        setMissingPays(initialMissingPays);
-    }, [initialMissingPays]);
-
-    const handleCreatePays = (pays: string) => {
-        setSelectedPays(pays);
+    const handleCreateDevise = (devise: string) => {
+        setSelectedDevise(devise);
         setShowCreateDialog(true);
     };
 
-    const handlePaysCreated = (createdPays: string) => {
-        // Retirer le pays créé de la liste
-        const newMissingPays = missingPays.filter(p => p !== createdPays);
-        setMissingPays(newMissingPays);
+    const handleDeviseCreated = (createdDevise: string) => {
+        // Retirer la devise créée de la liste
+        const newMissingDevises = missingDevises.filter(d => d !== createdDevise);
+        setMissingDevises(newMissingDevises);
         setShowCreateDialog(false);
-        toast.success(`Pays ${createdPays} créé avec succès`);
+        toast.success(`Devise ${createdDevise} créée avec succès`);
         
-        // Si tous les pays ont été créés selon la liste locale, passer automatiquement à l'étape suivante
+        // Si toutes les devises ont été créées selon la liste locale, passer automatiquement à l'étape suivante
         // Le re-parsing dans onContinue vérifiera la réalité de la base de données
-        if (newMissingPays.length === 0) {
+        if (newMissingDevises.length === 0) {
             setTimeout(() => {
                 onContinue();
             }, 1000); // Délai plus long pour s'assurer que les données sont commitées
@@ -65,12 +63,12 @@ export const MissingPaysDialog = ({
     };
 
     const handleContinue = () => {
-        if (missingPays.length === 0) {
+        if (missingDevises.length === 0) {
             onContinue();
         } else {
-            // Il reste des pays non créés, demander confirmation
+            // Il reste des devises non créées, demander confirmation
             const confirmed = confirm(
-                `Il reste ${missingPays.length} pays non créé(s). Voulez-vous continuer sans les créer ?`
+                `Il reste ${missingDevises.length} devise(s) non créée(s). Voulez-vous continuer sans les créer ?`
             );
             if (confirmed) {
                 onContinue();
@@ -78,7 +76,7 @@ export const MissingPaysDialog = ({
         }
     };
 
-    if (initialMissingPays.length === 0) {
+    if (initialMissingDevises.length === 0) {
         return null;
     }
 
@@ -89,10 +87,10 @@ export const MissingPaysDialog = ({
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <AlertCircle className="w-5 h-5 text-orange-500" />
-                            Pays manquants ({missingPays.length})
+                            Devises manquantes ({missingDevises.length})
                         </DialogTitle>
                         <DialogDescription>
-                            Les pays suivants n'existent pas dans la base de données. 
+                            Les devises suivantes n'existent pas dans la base de données. 
                             Vous pouvez les créer individuellement ou continuer sans les créer.
                         </DialogDescription>
                     </DialogHeader>
@@ -101,19 +99,19 @@ export const MissingPaysDialog = ({
                         <Alert>
                             <AlertCircle className="h-4 w-4" />
                             <AlertDescription>
-                                <div className="space-y-3 gap-4">
-                                    {missingPays.map((pays, index) => (
+                                <div className="space-y-3">
+                                    {missingDevises.map((devise, index) => (
                                         <div key={index} className="flex items-center justify-between p-2 border rounded w-[300px]">
                                             <Badge variant="outline">
-                                                {pays}
+                                                {devise}
                                             </Badge>
                                             <Button
                                                 size="sm"
-                                                onClick={() => handleCreatePays(pays)}
+                                                onClick={() => handleCreateDevise(devise)}
                                                 className="gap-2"
                                             >
                                                 <Plus className="w-4 h-4" />
-                                              
+                                                
                                             </Button>
                                         </div>
                                     ))}
@@ -133,17 +131,17 @@ export const MissingPaysDialog = ({
                 </DialogContent>
             </Dialog>
 
-            {/* Dialog de création Pays */}
+            {/* Dialog de création Devise */}
             <ResponsiveDialog
-                title="Nouveau Pays"
-                description={`Créer le pays: ${selectedPays}`}
+                title="Nouvelle Devise"
+                description={`Créer la devise: ${selectedDevise}`}
                 open={showCreateDialog}
                 onOpenChange={setShowCreateDialog}
             >
-                <CreatePaysDialogForm
-                    initialCode={selectedPays}
+                <CreateDeviseDialogForm
+                    initialCode={selectedDevise}
                     onSuccess={() => {
-                        handlePaysCreated(selectedPays);
+                        handleDeviseCreated(selectedDevise);
                     }}
                     onCancel={() => setShowCreateDialog(false)}
                 />

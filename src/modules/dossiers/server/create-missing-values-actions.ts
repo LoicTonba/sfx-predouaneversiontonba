@@ -208,7 +208,6 @@ export async function createMissingHSCodes(hscodes: string[]) {
                 data: {
                     HS_Code: hscode,
                     Libelle_HS_Code: `HS Code ${hscode}`,
-                    UploadKey: `AUTO_${hscode}`,
                     Session: parseInt(session.user.id),
                     Date_Creation: new Date(),
                 },

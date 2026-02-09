@@ -254,7 +254,7 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
             // === STATISTIQUES DANS UN ENCADRÉ ===
             const dcCount = notes.filter(n => n.Regime === "DC").length;
             const trCount = notes.filter(n => n.Regime === "TR").length;
-            const exoCount = notes.filter(n => n.Regime === "EXO").length;
+            const exoCount = notes.filter(n => n.Regime === "" || n.Regime === "EXO").length;
             const totalPoids = notes.reduce((sum, n) => sum + Number(n.Poids_Brut || 0), 0);
             const totalVolume = notes.reduce((sum, n) => sum + Number(n.Volume || 0), 0);
             const totalValeur = notes.reduce((sum, n) => sum + Number(n.Valeur || 0), 0);
@@ -418,7 +418,7 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                 const regime = row.getValue("Regime") as string;
                 const color = regime === "DC" ? "bg-red-100 text-red-800" :
                     regime === "TR" ? "bg-green-100 text-green-800" :
-                        "bg-gray-100 text-gray-800";
+                        "bg-orange-100 text-orange-800";
                 return (
                     <Badge className={color}>
                         {regime || ""}
@@ -597,6 +597,12 @@ export const NoteDetailView = ({ dossierId, entiteId }: NoteDetailViewProps) => 
                                     <p className="text-sm text-muted-foreground">Lignes TR</p>
                                     <p className="text-2xl font-bold text-green-600">
                                         {notes.filter(n => n.Regime === "TR").length}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Lignes EXO</p>
+                                    <p className="text-2xl font-bold text-orange-600">
+                                        {notes.filter(n => n.Regime === "").length}
                                     </p>
                                 </div>
                                 <div>

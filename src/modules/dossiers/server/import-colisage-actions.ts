@@ -120,7 +120,7 @@ export async function parseColisageExcelFile(formData: FormData, dossierId?: num
         // Transforme chaque ligne Excel en format standardisé pour l'application
         const parsedRows = rows.map((row, index) => ({
             _rowIndex: index + 2,  // Index de ligne (commence à 2 pour correspondre à Excel)
-            rowKey: row["Row_Key"] || row["Row Key"] || row["rowKey"] || "", // Clé unique de la ligne
+            rowKey: row["Upload_Key"] || row["Upload Key"] || row["UploadKey"] || "", // Clé unique de la ligne
             hscode: row["HS_Code"] || row["HS Code"] || row["Code HS"] || null, // Code HS (optionnel)
             description: String(row["Descr"] || row["Description"] || row["Description Colis"] || ""), // Description
             numeroCommande: String(row["Command_No"] || row["No Commande"] || row["Numéro Commande"] || ""), // N° commande

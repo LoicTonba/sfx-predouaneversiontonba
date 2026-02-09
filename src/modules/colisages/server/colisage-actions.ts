@@ -24,16 +24,29 @@ import { revalidatePath } from "next/cache";  // Fonction Next.js pour invalider
 import { headers } from "next/headers";  // Fonction Next.js pour récupérer les en-têtes HTTP (sessions)
 
 /**
- * Convertit les Decimal de Prisma en nombres via JSON
+ * ============================================================================
+ * FONCTION UTILITAIRE : convertDecimalsToNumbers
+ * ============================================================================
+ * Rôle global : Convertit les objets Decimal Prisma en nombres JavaScript.
+ * Essentiel pour la sérialisation JSON et la compatibilité avec le frontend.
+ * 
+ * Paramètre :
+ * @param data - Objet contenant potentiellement des Decimal à convertir
+ * 
+ * Retour : Objet avec tous les Decimal convertis en nombres
+ * ============================================================================
  */
 function convertDecimalsToNumbers(data: any): any {
-  const jsonString = JSON.stringify(data, (_, value) => {
-    if (value && typeof value === 'object' && value.constructor.name === 'Decimal') {
-      return parseFloat(value.toString());
-    }
-    return value;
-  });
-  return JSON.parse(jsonString);
+    // Convertit l'objet en JSON string en remplaçant les Decimal par des nombres
+    const jsonString = JSON.stringify(data, (_, value) => {
+        // Vérifie si la valeur est un objet Decimal Prisma
+        if (value && typeof value === 'object' && value.constructor.name === 'Decimal') {
+            return parseFloat(value.toString()); // Convertit le Decimal en nombre
+        }
+        return value; // Garde les autres valeurs inchangées
+    });
+    // Reparse le JSON pour obtenir l'objet avec des nombres normaux
+    return JSON.parse(jsonString);
 }
 
 /**
@@ -619,14 +632,15 @@ export async function deleteColisage(id: string | number) {
     }
 
     // --------------------------------------------------------------------
-    // 2️⃣ VALIDATION ID
+    // 2️⃣ CONVERSION ET VALIDATION ID
     // --------------------------------------------------------------------
-    if (!Number.isInteger(id)) {
+    // Convertit d'abord l'ID en nombre si c'est une chaîne
+    const colisageId = typeof id === 'string' ? parseInt(id) : id;
+    
+    // Ensuite valide que c'est un entier valide
+    if (!Number.isInteger(colisageId) || colisageId <= 0) {
       throw new Error("ID colisage invalide");
     }
-
-    // Convertit l'ID en nombre si c'est une chaîne
-    const colisageId = typeof id === 'string' ? parseInt(id) : id;
 
     // Récupère l'ID du dossier avant suppression pour invalider le cache
     const colisage = await prisma.tColisageDossiers.findUnique({
@@ -714,6 +728,124 @@ export interface ImportColisageRowNormalized {
     Description_Colis: string | null;
     Qte_Colis: number;
   } | null;
+}
+
+/**
+ * ============================================================================
+ * FONCTION : parseColisageExcelFile
+ * ============================================================================
+ * Rôle global : Parse un fichier Excel de colisages avec validation et détection
+ * des valeurs manquantes. Extrait les données et vérifie leur validité.
+ * 
+ * Paramètres :
+ * @param formData - FormData contenant le fichier Excel
+ * @param dossierId - ID optionnel du dossier pour récupérer le client associé
+ * 
+ * Retour : Objet { success: boolean, data: { rows, total, missingValues, clientId }, error?: string }
+ * ============================================================================
+ */
+export async function parseColisageExcelFile(formData: FormData, dossierId?: number) {
+    try {
+        // --------------------------------------------------------------------
+        // 1️⃣ VÉRIFICATION DE L'AUTHENTIFICATION
+        // --------------------------------------------------------------------
+        const session = await auth.api.getSession({
+            headers: await headers(),
+        });
+
+        if (!session) {
+            throw new Error("Missing User Session");
+        }
+
+        // --------------------------------------------------------------------
+        // 2️⃣ RÉCUPÉRATION ET VALIDATION DU FICHIER
+        // --------------------------------------------------------------------
+        const file = formData.get("file") as File;  // Récupère le fichier depuis FormData
+        if (!file) {
+            return { success: false, error: "Aucun fichier fourni" };
+        }
+
+        // --------------------------------------------------------------------
+        // 3️⃣ RÉCUPÉRATION DU CLIENT ASSOCIÉ
+        // --------------------------------------------------------------------
+        // Récupérer le client du dossier si dossierId est fourni, sinon utilise l'utilisateur
+        let clientId = parseInt(session.user.id);
+        if (dossierId) {
+            const dossier = await prisma.tDossiers.findUnique({
+                where: { ID_Dossier: dossierId },
+                select: { Client: true }  // Sélectionne uniquement l'ID du client
+            });
+            if (dossier) {
+                clientId = dossier.Client;  // Utilise le client du dossier
+            }
+        }
+
+        // --------------------------------------------------------------------
+        // 4️⃣ PARSING DU FICHIER EXCEL
+        // --------------------------------------------------------------------
+        const buffer = await file.arrayBuffer();  // Convertit le fichier en buffer binaire
+        const XLSX = await import("xlsx");       // Import dynamique de la librairie XLSX
+        const workbook = XLSX.read(buffer, { type: "array" }); // Lit le fichier Excel
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]]; // Prend la première feuille
+
+        if (!worksheet) {
+            return { success: false, error: "Aucune feuille trouvée dans le fichier" };
+        }
+
+        const rows = XLSX.utils.sheet_to_json(worksheet) as any[]; // Convertit la feuille en objets JSON
+
+        if (rows.length === 0) {
+            return { success: false, error: "Le fichier est vide" };
+        }
+
+        // --------------------------------------------------------------------
+        // 5️⃣ MAPPING ET NORMALISATION DES DONNÉES
+        // --------------------------------------------------------------------
+        // Transforme chaque ligne Excel en format standardisé pour l'application
+        const parsedRows = rows.map((row, index) => ({
+            _rowIndex: index + 2,  // Index de ligne (commence à 2 pour correspondre à Excel)
+            rowKey: row["Upload_Key"] || row["Upload Key"] || row["UploadKey"] || "", // Clé unique de la ligne
+            hscode: row["HS_Code"] || row["HS Code"] || row["Code HS"] || null, // Code HS (optionnel)
+            description: String(row["Descr"] || row["Description"] || row["Description Colis"] || ""), // Description
+            numeroCommande: String(row["Command_No"] || row["No Commande"] || row["Numéro Commande"] || ""), // N° commande
+            nomFournisseur: String(row["Supplier_Name"] || row["Nom Fournisseur"] || row["Fournisseur"] || ""), // Fournisseur
+            numeroFacture: String(row["Invoice_No"] || row["No Facture"] || row["Numéro Facture"] || ""), // N° facture
+            itemNo: String(row["Item_No"] || row["Item No"] || row["Numéro Ligne"] || ""), // Numéro d'article
+            devise: row["Currency"] || row["Devise"] || row["Code Devise"], // Code devise
+            quantite: parseFloat(row["Qty"] || row["Quantité"] || row["Qte Colis"]) || 1, // Quantité
+            prixUnitaireColis: parseFloat(row["Unit_Prize_Colis"] || row["Prix Unitaire Colis"] || row["Prix Unitaire Colisage"]) || 0, // Prix unitaire
+            poidsBrut: parseFloat(row["Gross_Weight"] || row["Poids Brut"]) || 0, // Poids brut
+            poidsNet: parseFloat(row["Net_Weight"] || row["Poids Net"]) || 0, // Poids net
+            volume: parseFloat(row["Volume"]) || 0, // Volume
+            paysOrigine: row["Country_Origin"] || row["Pays Origine"] || row["Code Pays"], // Pays d'origine
+            // Régime code optionnel (peut être vide)
+            regimeCode: row["Regime_Code"] || row["Régime Code"] || row["Code Régime"] || null,
+            regimeRatio: parseFloat(row["Regime_Ratio"] || row["Régime Ratio"] || row["Ratio Régime"]) || 0, // Ratio en %
+            regroupementClient: row["Customer_Grouping"] || row["Regroupement Client"] || "", // Regroupement
+        }));
+
+        // --------------------------------------------------------------------
+        // 6️⃣ VALIDATION ET DÉTECTION DES VALEURS MANQUANTES
+        // --------------------------------------------------------------------
+        // Valide toutes les données contre la base de données et détecte ce qui manque
+        const missingValues = await validateAndDetectMissing(parsedRows, clientId);
+
+        // --------------------------------------------------------------------
+        // 7️⃣ RETOUR DES RÉSULTATS
+        // --------------------------------------------------------------------
+        return {
+            success: true,
+            data: {
+                rows: parsedRows,                    // Lignes parsées et normalisées
+                total: parsedRows.length,            // Nombre total de lignes
+                missingValues,                       // Devises, Pays, HS Codes manquants
+                clientId,                           // ID du client pour créer les associations
+            },
+        };
+    } catch (error) {
+        console.error("parseColisageExcelFile error:", error);
+        return { success: false, error: error instanceof Error ? error.message : "Erreur lors du parsing" };
+    }
 }
 
 /**
@@ -1234,6 +1366,57 @@ export async function importSelectedColisages(
   const updatedColisages: any[] = [];
   const skippedColisages: any[] = [];  // Doublons sautés
   const errors: Array<{ row: number; uploadKey?: string; error: string }> = [];
+
+   // Extraire les valeurs distinctes pour chaque type
+          const distinctDevises = [...new Set(rows.map(r => r.devise).filter(Boolean))];
+          const distinctPays = [...new Set(rows.map(r => r.paysOrigine).filter(Boolean))];
+          // Convertir les HS codes en strings pour la comparaison, mapper "0" vers "-"
+          const distinctHscodes = [...new Set(rows.map(r => r.hscode).filter(h => h !== null && h !== undefined).map(h => {
+              const hsCode = String(h);
+              return hsCode === '0' ? '-' : hsCode; // Mapper "0" vers "-" qui correspond à l'ID 0
+          }))];
+          
+          // Préparer les régimes avec leurs taux DC
+          const distinctRegimes = [...new Set(rows
+              .filter(r => r.regimeRatio !== undefined && r.regimeRatio !== null)
+              .map(r => {
+                  const ratio = typeof r.regimeRatio === 'string' ? parseFloat(r.regimeRatio) : r.regimeRatio;
+                  return (ratio / 100).toString(); // Convertir en décimal (0-1)
+              })
+          )];
+  
+          // Utiliser Prisma pour récupérer les IDs
+          const devisesMap = new Map<string, number>();
+          if (distinctDevises.length > 0) {
+              const devisesResult = await prisma.vDevises.findMany({
+                  where: { Code_Devise: { in: distinctDevises } },
+                  select: { ID_Devise: true, Code_Devise: true }
+              });
+              devisesResult.forEach(d => devisesMap.set(d.Code_Devise, d.ID_Devise));
+          }
+  
+          const paysMap = new Map<string, number>();
+          if (distinctPays.length > 0) {
+              const paysResult = await prisma.vPays.findMany({
+                  where: { Code_Pays: { in: distinctPays } },
+                  select: { ID_Pays: true, Code_Pays: true }
+              });
+              paysResult.forEach(p => paysMap.set(p.Code_Pays, p.ID_Pays));
+          }
+  
+          const hscodesMap = new Map<string, number>();
+          if (distinctHscodes.length > 0) {
+              const hscodesResult = await prisma.vHSCodes.findMany({
+                  where: { 
+                      OR: [
+                          { HS_Code: { in: distinctHscodes } },
+                          { ID_HS_Code: 0 } // Inclure explicitement l'ID 0
+                      ]
+                  },
+                  select: { ID_HS_Code: true, HS_Code: true }
+              });
+              hscodesResult.forEach(h => hscodesMap.set(h.HS_Code, h.ID_HS_Code));
+          }
 
   console.log(`\n🚀 ============================================================`);
   console.log(`🚀 [importSelectedColisages] DÉBUT IMPORT`);

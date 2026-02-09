@@ -15,47 +15,47 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
-import { CreateDeviseDialogForm } from "./create-devise-dialog";
+import { CreateHSCodeDialogForm } from "../../../dossiers/ui/components/create-hscode-dialog";
 
-interface MissingDevisesDialogProps {
+interface MissingHSCodesDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    missingDevises: string[];
+    missingHSCodes: string[];
     onContinue: () => void;
     onCancel: () => void;
 }
 
-export const MissingDevisesDialog = ({
+export const MissingHSCodesDialog = ({
     open,
     onOpenChange,
-    missingDevises: initialMissingDevises,
+    missingHSCodes: initialMissingHSCodes,
     onContinue,
     onCancel,
-}: MissingDevisesDialogProps) => {
-    const [missingDevises, setMissingDevises] = useState<string[]>(initialMissingDevises);
+}: MissingHSCodesDialogProps) => {
+    const [missingHSCodes, setMissingHSCodes] = useState<string[]>(initialMissingHSCodes);
     const [showCreateDialog, setShowCreateDialog] = useState(false);
-    const [selectedDevise, setSelectedDevise] = useState<string>("");
+    const [selectedHSCode, setSelectedHSCode] = useState<string>("");
 
     // Synchroniser le state local avec les props
     useEffect(() => {
-        setMissingDevises(initialMissingDevises);
-    }, [initialMissingDevises]);
+        setMissingHSCodes(initialMissingHSCodes);
+    }, [initialMissingHSCodes]);
 
-    const handleCreateDevise = (devise: string) => {
-        setSelectedDevise(devise);
+    const handleCreateHSCode = (hsCode: string) => {
+        setSelectedHSCode(hsCode);
         setShowCreateDialog(true);
     };
 
-    const handleDeviseCreated = (createdDevise: string) => {
-        // Retirer la devise créée de la liste
-        const newMissingDevises = missingDevises.filter(d => d !== createdDevise);
-        setMissingDevises(newMissingDevises);
+    const handleHSCodeCreated = (createdHSCode: string) => {
+        // Retirer le HS Code créé de la liste locale
+        const newMissingHSCodes = missingHSCodes.filter(code => code !== createdHSCode);
+        setMissingHSCodes(newMissingHSCodes);
         setShowCreateDialog(false);
-        toast.success(`Devise ${createdDevise} créée avec succès`);
+        toast.success(`HS Code ${createdHSCode} créé avec succès`);
         
-        // Si toutes les devises ont été créées selon la liste locale, passer automatiquement à l'étape suivante
+        // Si tous les HS Codes ont été créés selon la liste locale, passer automatiquement à l'étape suivante
         // Le re-parsing dans onContinue vérifiera la réalité de la base de données
-        if (newMissingDevises.length === 0) {
+        if (newMissingHSCodes.length === 0) {
             setTimeout(() => {
                 onContinue();
             }, 1000); // Délai plus long pour s'assurer que les données sont commitées
@@ -63,12 +63,12 @@ export const MissingDevisesDialog = ({
     };
 
     const handleContinue = () => {
-        if (missingDevises.length === 0) {
+        if (missingHSCodes.length === 0) {
             onContinue();
         } else {
-            // Il reste des devises non créées, demander confirmation
+            // Il reste des HS Codes non créés, demander confirmation
             const confirmed = confirm(
-                `Il reste ${missingDevises.length} devise(s) non créée(s). Voulez-vous continuer sans les créer ?`
+                `Il reste ${missingHSCodes.length} HS Code(s) non créé(s). Voulez-vous continuer sans les créer ?`
             );
             if (confirmed) {
                 onContinue();
@@ -76,7 +76,7 @@ export const MissingDevisesDialog = ({
         }
     };
 
-    if (initialMissingDevises.length === 0) {
+    if (initialMissingHSCodes.length === 0) {
         return null;
     }
 
@@ -87,10 +87,10 @@ export const MissingDevisesDialog = ({
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <AlertCircle className="w-5 h-5 text-orange-500" />
-                            Devises manquantes ({missingDevises.length})
+                            HS Codes manquants ({missingHSCodes.length})
                         </DialogTitle>
                         <DialogDescription>
-                            Les devises suivantes n'existent pas dans la base de données. 
+                            Les HS Codes suivants n'existent pas dans la base de données. 
                             Vous pouvez les créer individuellement ou continuer sans les créer.
                         </DialogDescription>
                     </DialogHeader>
@@ -100,18 +100,18 @@ export const MissingDevisesDialog = ({
                             <AlertCircle className="h-4 w-4" />
                             <AlertDescription>
                                 <div className="space-y-3">
-                                    {missingDevises.map((devise, index) => (
+                                    {missingHSCodes.map((hsCode, index) => (
                                         <div key={index} className="flex items-center justify-between p-2 border rounded w-[300px]">
-                                            <Badge variant="outline">
-                                                {devise}
+                                            <Badge variant="outline" className="font-mono">
+                                                {hsCode}
                                             </Badge>
                                             <Button
                                                 size="sm"
-                                                onClick={() => handleCreateDevise(devise)}
+                                                onClick={() => handleCreateHSCode(hsCode)}
                                                 className="gap-2"
                                             >
                                                 <Plus className="w-4 h-4" />
-                                                
+                                              
                                             </Button>
                                         </div>
                                     ))}
@@ -131,17 +131,17 @@ export const MissingDevisesDialog = ({
                 </DialogContent>
             </Dialog>
 
-            {/* Dialog de création Devise */}
+            {/* Dialog de création HS Code */}
             <ResponsiveDialog
-                title="Nouvelle Devise"
-                description={`Créer la devise: ${selectedDevise}`}
+                title="Nouveau HS Code"
+                description={`Créer le HS Code: ${selectedHSCode}`}
                 open={showCreateDialog}
                 onOpenChange={setShowCreateDialog}
             >
-                <CreateDeviseDialogForm
-                    initialCode={selectedDevise}
+                <CreateHSCodeDialogForm
+                    initialCode={selectedHSCode}
                     onSuccess={() => {
-                        handleDeviseCreated(selectedDevise);
+                        handleHSCodeCreated(selectedHSCode);
                     }}
                     onCancel={() => setShowCreateDialog(false)}
                 />
