@@ -6,6 +6,7 @@ SELECT
   C.[ID_Regime_Douanier],
   C.[Libelle_Regime_Douanier],
   C.[Libelle_Regime_Declaration],
+  C.[Regime_Code],
   C.[Ratio_DC],
   C.[Ratio_TR],
   A.[Date Creation] AS [Date_Creation],

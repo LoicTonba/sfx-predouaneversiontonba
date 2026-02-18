@@ -6,8 +6,9 @@ SELECT
   B.[ID_Regime_Douanier],
   B.[Libelle_Regime_Douanier],
   B.[Libelle_Regime_Declaration],
-  A.[Regime] AS [Regime],
   B.[Regroupement_Client],
+  A.[Regime] AS [Regime],
+  B.Code_Devise,
   SUM(A.[Nbre Paquetage]) AS [Nbre_Paquetage],
   SUM(A.[Valeur]) AS [Valeur],
   SUM(A.[Base Poids Brut]) AS [Base_Poids_Brut],
@@ -24,5 +25,6 @@ GROUP BY
   B.[ID_Regime_Douanier],
   B.[Libelle_Regime_Douanier],
   B.[Libelle_Regime_Declaration],
+  B.[Regroupement_Client],
   A.[Regime],
-  B.[Regroupement_Client];
+  B.Code_Devise;

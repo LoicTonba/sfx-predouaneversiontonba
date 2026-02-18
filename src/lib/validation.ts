@@ -20,7 +20,7 @@ export const OrderTransitCreateSchema = z.object({
     orderReference: z.string().min(1, "La référence de l'ordre de transit est requise").max(100, "La référence ne doit pas dépasser 100 caractères"),
     description: z.string().max(1000, "La description ne doit pas dépasser 1000 caractères").optional().or(z.literal("")),
     numeroOT: z.string().min(1, "Le numéro OT est requis").max(100, "Le numéro OT ne doit pas dépasser 100 caractères"),
-    quantiteColisOT: z.number().nonnegative("La quantité doit être positive").optional(),
+    nbrePaquetageOT: z.number().nonnegative("Le nombre de paquetage doit être positif").optional(),
     poidsBrutOT: z.number().nonnegative("Le poids brut doit être positif").optional(),
     poidsNetOT: z.number().nonnegative("Le poids net doit être positif").optional(),
     volumeOT: z.number().nonnegative("Le volume doit être positif").optional(),
@@ -40,9 +40,10 @@ export const ColisageCreateSchema = z.object({
     numeroCommande: z.string().max(50, "Le numéro de commande ne doit pas dépasser 50 caractères").optional(),
     nomFournisseur: z.string().max(200, "Le nom du fournisseur ne doit pas dépasser 200 caractères").optional(),
     numeroFacture: z.string().max(50, "Le numéro de facture ne doit pas dépasser 50 caractères").optional(),
+    itemNo: z.string().max(50, "Le numéro de ligne ne doit pas dépasser 50 caractères").optional(),
     deviseId: z.string().uuid("L'ID devise doit être un UUID valide"),
     quantite: z.number().positive("La quantité doit être positive").optional(),
-    prixUnitaireFacture: z.number().nonnegative("Le prix unitaire doit être positif").optional(),
+    prixUnitaireColis: z.number().nonnegative("Le prix unitaire doit être positif").optional(),
     poidsBrut: z.number().nonnegative("Le poids brut doit être positif").optional(),
     poidsNet: z.number().nonnegative("Le poids net doit être positif").optional(),
     volume: z.number().nonnegative("Le volume doit être positif").optional(),
@@ -60,9 +61,10 @@ export const ColisageImportRowSchema = z.object({
     numeroCommande: z.string().max(50, "Le numéro de commande ne doit pas dépasser 50 caractères").optional(),
     nomFournisseur: z.string().max(200, "Le nom du fournisseur ne doit pas dépasser 200 caractères").optional(),
     numeroFacture: z.string().max(50, "Le numéro de facture ne doit pas dépasser 50 caractères").optional(),
+    itemNo: z.string().max(50, "Le numéro de ligne ne doit pas dépasser 50 caractères").optional(),
     devise: z.string().min(1, "Code devise requis"),
     quantite: z.number().positive("La quantité doit être positive").optional(),
-    prixUnitaireFacture: z.number().nonnegative("Le prix unitaire doit être positif").optional(),
+    prixUnitaireColis: z.number().nonnegative("Le prix unitaire doit être positif").optional(),
     poidsBrut: z.number().nonnegative("Le poids brut doit être positif").optional(),
     poidsNet: z.number().nonnegative("Le poids net doit être positif").optional(),
     volume: z.number().nonnegative("Le volume doit être positif").optional(),
@@ -84,7 +86,7 @@ export const ColisageImportSchema = z.object({
     hscodeCode: z.string().optional(),
     regimeLibelle: z.string().optional(),
     quantite: z.number().positive("La quantité doit être positive").optional(),
-    prixUnitaireFacture: z.number().nonnegative("Le prix unitaire doit être positif").optional(),
+    prixUnitaireColis: z.number().nonnegative("Le prix unitaire doit être positif").optional(),
     poidsBrut: z.number().nonnegative("Le poids brut doit être positif").optional(),
     poidsNet: z.number().nonnegative("Le poids net doit être positif").optional(),
     volume: z.number().nonnegative("Le volume doit être positif").optional(),
@@ -116,9 +118,8 @@ export const HscodeUpdateSchema = HscodeCreateSchema.partial();
 // ============ TPAYS VALIDATIONS ============
 
 export const TPaysCreateSchema = z.object({
-    codePays: z.string().min(1, "Le code pays est requis").max(5, "Le code ne doit pas dépasser 5 caractères"),
-    libellePays: z.string().min(1, "Le libellé pays est requis").max(200, "Le libellé ne doit pas dépasser 200 caractères"),
-    deviseLocale: z.number().min(1, "La devise locale est requise"),
+    code: z.string().min(1, "Le code pays est requis").max(5, "Le code ne doit pas dépasser 5 caractères"),
+    libelle: z.string().min(1, "Le libellé pays est requis").max(200, "Le libellé ne doit pas dépasser 200 caractères"),
 });
 
 export const TPaysUpdateSchema = TPaysCreateSchema.partial();
@@ -137,7 +138,10 @@ export const TRegimeDouanierUpdateSchema = TRegimeDouanierCreateSchema.partial()
 export const TRegimeDeclarationCreateSchema = z.object({
     regimeDouanierId: z.string().min(1, "L'ID régime douanier est requis"),
     libelle: z.string().min(1, "Le libellé est requis").max(200, "Le libellé ne doit pas dépasser 200 caractères"),
-    tauxDC: z.number().min(0, "Le taux DC doit être positif"),
+    tauxRegime: z.number()
+        .refine((val) => val === -2 || val === -1 || (val >= 0 && val <= 1), {
+            message: "Le taux régime doit être -2 (TTC), -1 (100% TR), 0 (EXO), 1 (100% DC) ou entre 0 et 1 (DC RATIO)"
+        }),
 });
 
 export const TRegimeDeclarationUpdateSchema = TRegimeDeclarationCreateSchema.partial();

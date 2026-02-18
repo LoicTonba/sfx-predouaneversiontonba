@@ -564,7 +564,7 @@ INSERT INTO TUtilisateurs ([Code Utilisateur], [Nom Utilisateur]) VALUES ('NR', 
 INSERT INTO TUtilisateurs ([Code Utilisateur], [Nom Utilisateur]) VALUES ('NV', 'NDALOW VINITA')
 INSERT INTO TUtilisateurs ([Code Utilisateur], [Nom Utilisateur]) VALUES ('TC', 'TONLEU CHIMENE')
 
--- Mettre Devise Active à 0
+-- Mettre Devise Inactive à 0
 UPDATE TDevises
 SET [Devise Inactive] = 0
 WHERE [ID Devise] <> 0

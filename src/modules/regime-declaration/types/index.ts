@@ -1,7 +1,7 @@
 export type RegimeDeclarationWithDouanier = {
   id: number;
   libelleRegimeDeclaration: string;
-  tauxDC: number;
+  tauxRegime: number;
   regimeDouanier: number;
   dateCreation: string | Date;
   tRegimesDouaniers?: {

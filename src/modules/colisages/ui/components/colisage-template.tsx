@@ -330,7 +330,7 @@ export const ColisageImportDialog = ({ dossierId }: ColisageImportPreviewDialogP
                           if (currentFile) {
                               const formData = new FormData();
                               formData.append("file", currentFile);
-                              const reparseResult = await parseColisageExcelFile(formData, dossierId);
+                              const reparseResult = await parseColisageExcelFile(formData, Number(dossierId));
                               
                               if (reparseResult.success && reparseResult.data) {
                                   // Mettre à jour avec les nouvelles données validées
@@ -346,7 +346,7 @@ export const ColisageImportDialog = ({ dossierId }: ColisageImportPreviewDialogP
                           if (currentFile) {
                               const formData = new FormData();
                               formData.append("file", currentFile);
-                              const reparseResult = await parseColisageExcelFile(formData, dossierId);
+                              const reparseResult = await parseColisageExcelFile(formData, Number(dossierId));
                               
                               if (reparseResult.success && reparseResult.data) {
                                   // Mettre à jour avec les nouvelles données validées
@@ -403,7 +403,7 @@ export const ColisageImportDialog = ({ dossierId }: ColisageImportPreviewDialogP
                                       console.log('🔄 [RegimeAssociation] Re-parsing après association...');
                                       const formData = new FormData();
                                       formData.append("file", currentFile);
-                                      const reparseResult = await parseColisageExcelFile(formData, dossierId);
+                                      const reparseResult = await parseColisageExcelFile(formData, Number(dossierId));
                                       
                                       console.log('📊 [RegimeAssociation] Résultat re-parsing:', reparseResult);
                                       
@@ -466,7 +466,7 @@ export const ColisageImportDialog = ({ dossierId }: ColisageImportPreviewDialogP
                               
                               const formData = new FormData();
                               formData.append("file", currentFile);
-                              const reparseResult = await parseColisageExcelFile(formData, dossierId);
+                              const reparseResult = await parseColisageExcelFile(formData, Number(dossierId));
                               
                               if (reparseResult.success && reparseResult.data) {
                                   const updatedMissingValues = {
@@ -501,7 +501,7 @@ export const ColisageImportDialog = ({ dossierId }: ColisageImportPreviewDialogP
                               
                               const formData = new FormData();
                               formData.append("file", currentFile);
-                              const reparseResult = await parseColisageExcelFile(formData, dossierId);
+                              const reparseResult = await parseColisageExcelFile(formData, Number(dossierId));
                               
                               if (reparseResult.success && reparseResult.data) {
                                   const updatedMissingValues = {
@@ -536,7 +536,7 @@ export const ColisageImportDialog = ({ dossierId }: ColisageImportPreviewDialogP
                               
                               const formData = new FormData();
                               formData.append("file", currentFile);
-                              const reparseResult = await parseColisageExcelFile(formData, dossierId);
+                              const reparseResult = await parseColisageExcelFile(formData, Number(dossierId));
                               
                               if (reparseResult.success && reparseResult.data) {
                                   const updatedMissingValues = {

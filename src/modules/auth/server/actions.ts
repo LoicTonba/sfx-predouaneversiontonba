@@ -7,6 +7,40 @@
 import { cookies } from 'next/headers';
 import { signIn as authSignIn, signOut as authSignOut, getUserById } from '@/lib/auth/auth-service';
 
+type SessionCookiePayload = {
+    userId: number;
+    sessionId: number;
+    codeUtilisateur?: string;
+};
+
+/**
+ * Parse le cookie de session de manière robuste:
+ * - évite JSON.parse sur une valeur vide ou invalide
+ * - vérifie les champs minimaux attendus
+ */
+function parseSessionCookieValue(rawValue: string | undefined): SessionCookiePayload | null {
+    if (!rawValue || rawValue.trim().length === 0) {
+        return null;
+    }
+
+    try {
+        const parsed: unknown = JSON.parse(rawValue);
+        if (
+            typeof parsed === 'object' &&
+            parsed !== null &&
+            'userId' in parsed &&
+            'sessionId' in parsed &&
+            typeof (parsed as { userId: unknown }).userId === 'number' &&
+            typeof (parsed as { sessionId: unknown }).sessionId === 'number'
+        ) {
+            return parsed as SessionCookiePayload;
+        }
+        return null;
+    } catch {
+        return null;
+    }
+}
+
 export interface SignInResult {
     success: boolean;
     error?: string;
@@ -66,10 +100,10 @@ export async function signOut(): Promise<{ success: boolean }> {
         const sessionCookie = cookieStore.get('session');
 
         if (sessionCookie) {
-            const session = JSON.parse(sessionCookie.value);
+            const session = parseSessionCookieValue(sessionCookie.value);
 
             // Fermer la session SQL Server
-            if (session.sessionId) {
+            if (session?.sessionId) {
                 await authSignOut(session.sessionId);
             }
 
@@ -96,7 +130,13 @@ export async function getSession() {
             return { user: null };
         }
 
-        const session = JSON.parse(sessionCookie.value);
+        const session = parseSessionCookieValue(sessionCookie.value);
+        if (!session) {
+            // Cookie corrompu/invalide: on le nettoie pour éviter les erreurs répétées.
+            cookieStore.delete('session');
+            return { user: null };
+        }
+
         const user = await getUserById(session.userId);
 
         if (!user) {

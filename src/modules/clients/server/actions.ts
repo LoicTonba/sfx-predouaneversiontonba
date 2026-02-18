@@ -19,15 +19,66 @@ export async function createClient(data: { nom: string }) {
       throw new Error("Missing User Session");
     }
 
-    // Utiliser l'entité par défaut (ID 0 = DEFAULT ENTITY créée par sql.sql)
-    const client = await prisma.tClients.create({
-      data: {
-        Nom_Client: data.nom,
-        Entite: 0, // Entité par défaut
-        Session: parseInt(session.user.id),
-        Date_Creation: new Date(),
-      },
-    });
+    // Validation métier minimale: éviter les INSERT avec nom vide.
+    const nomClient = data.nom?.trim();
+    if (!nomClient) {
+      throw new Error("Le nom du client est obligatoire");
+    }
+
+    // L'ID utilisateur vient de la session Better Auth (string), on le convertit proprement.
+    const sessionId = Number(session.user.id);
+    if (!Number.isInteger(sessionId)) {
+      throw new Error("Session utilisateur invalide");
+    }
+
+    // Prisma n'expose pas createOne sur TClients avec le client généré actuel.
+    // On passe donc par SQL brut paramétré.
+    //
+    // Important: TClients possède des triggers actifs en base.
+    // SQL Server interdit `OUTPUT ...` direct (sans INTO) sur une table avec trigger.
+    // On capture donc la ligne insérée via `OUTPUT ... INTO @Inserted`,
+    // puis on fait un SELECT final sur cette table variable.
+    const now = new Date();
+    const insertedRows = await prisma.$queryRaw<
+      Array<{
+        ID_Client: number;
+        Nom_Client: string;
+        Entite: number;
+        Session: number;
+        Date_Creation: Date;
+      }>
+    >`
+      DECLARE @Inserted TABLE (
+        ID_Client INT,
+        Nom_Client NVARCHAR(200),
+        Entite INT,
+        Session INT,
+        Date_Creation DATETIME
+      );
+
+      INSERT INTO dbo.TClients ([Nom Client], [Entite], [Session], [Date Creation])
+      OUTPUT
+        INSERTED.[ID Client],
+        INSERTED.[Nom Client],
+        INSERTED.[Entite],
+        INSERTED.[Session],
+        INSERTED.[Date Creation]
+      INTO @Inserted (ID_Client, Nom_Client, Entite, Session, Date_Creation)
+      VALUES (${nomClient}, ${0}, ${sessionId}, ${now});
+
+      SELECT
+        I.ID_Client,
+        I.Nom_Client,
+        I.Entite,
+        I.Session,
+        I.Date_Creation
+      FROM @Inserted AS I;
+    `;
+
+    const client = insertedRows[0];
+    if (!client) {
+      throw new Error("Echec de creation du client");
+    }
     
     revalidatePath("/client");
     return { success: true, data: client };

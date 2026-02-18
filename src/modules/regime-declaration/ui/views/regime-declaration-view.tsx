@@ -7,25 +7,13 @@ import { RegimeDeclarationWithDouanier } from "../../types";
 
 interface RegimeDeclarationViewProps {
     regimeDeclarations: RegimeDeclarationWithDouanier[];
-    total: number;
-    currentPage: number;
 }
 
 export const RegimeDeclarationView = ({
     regimeDeclarations,
-    total,
-    currentPage,
 }: RegimeDeclarationViewProps) => {
-    const pageSize = 10;
-    const totalPages = Math.ceil(total / pageSize);
 
     const router = useRouter();
-
-    const handlePageChange = (page: number) => {
-        const url = new URL(window.location.href);
-        url.searchParams.set("page", page.toString());
-        window.location.href = url.toString();
-    };
 
     return (
         <div className="py-4 px-4 md:px-8 flex flex-col gap-y-4">

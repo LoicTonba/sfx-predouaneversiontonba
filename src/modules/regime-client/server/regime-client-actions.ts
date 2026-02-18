@@ -19,15 +19,77 @@ function convertDecimalsToNumbers(data: any): any {
 }
 
 /**
+ * Cree une association regime-client via SQL brut parametre.
+ *
+ * Pourquoi ce helper:
+ * - certaines operations create() ne sont pas exposees par le client Prisma genere;
+ * - on centralise la logique d'insert pour les 2 actions de creation;
+ * - OUTPUT ... INTO permet de recuperer la ligne inseree proprement.
+ */
+async function insertRegimeClientAssociation(
+    clientId: number,
+    regimeId: number,
+    sessionId: number
+) {
+    const now = new Date();
+
+    const insertedRows = await prisma.$queryRaw<
+        Array<{
+            ID_Regime_Client: number;
+            Client: number;
+            Regime_Declaration: number;
+            Session: number;
+            Date_Creation: Date;
+        }>
+    >`
+        DECLARE @Inserted TABLE (
+            ID_Regime_Client INT,
+            Client INT,
+            Regime_Declaration INT,
+            Session INT,
+            Date_Creation DATETIME2(7)
+        );
+
+        INSERT INTO dbo.TRegimesClients ([Client], [Regime Declaration], [Session], [Date Creation])
+        OUTPUT
+            INSERTED.[ID Regime Client],
+            INSERTED.[Client],
+            INSERTED.[Regime Declaration],
+            INSERTED.[Session],
+            INSERTED.[Date Creation]
+        INTO @Inserted (ID_Regime_Client, Client, Regime_Declaration, Session, Date_Creation)
+        VALUES (${clientId}, ${regimeId}, ${sessionId}, ${now});
+
+        SELECT
+            I.ID_Regime_Client,
+            I.Client,
+            I.Regime_Declaration,
+            I.Session,
+            I.Date_Creation
+        FROM @Inserted AS I;
+    `;
+
+    const createdAssociation = insertedRows[0];
+    if (!createdAssociation) {
+        throw new Error("Echec de creation de l'association regime-client");
+    }
+
+    return createdAssociation;
+}
+
+/**
  * Récupérer tous les régimes de déclaration pour les selects
  */
 export async function getAllRegimesDeclarationsForSelect() {
     try {
+        // On lit la vue pour obtenir le ratio DC normalise (Ratio_DC).
+        // Le modele TRegimesDeclarations n'a pas de champ Taux_DC (il a Taux_Regime),
+        // c'est ce decalage qui provoquait l'erreur Prisma.
         const regimes = await prisma.tRegimesDeclarations.findMany({
             select: {
                 ID_Regime_Declaration: true,
                 Libelle_Regime_Declaration: true,
-                Taux_DC: true,
+                Taux_Regime: true,
             },
             orderBy: {
                 Libelle_Regime_Declaration: 'asc'
@@ -37,7 +99,7 @@ export async function getAllRegimesDeclarationsForSelect() {
         const options = regimes.map(regime => ({
             value: regime.ID_Regime_Declaration.toString(),
             label: regime.Libelle_Regime_Declaration,
-            tauxDC: convertDecimalsToNumbers(regime.Taux_DC)
+            tauxRegime: convertDecimalsToNumbers(regime.Taux_Regime)
         }));
 
         return { success: true, data: options };
@@ -69,7 +131,7 @@ export async function getRegimesClients() {
             clientNom: rc.Nom_Client,
             regimeId: rc.ID_Regime_Declaration,
             regimeLibelle: rc.Libelle_Regime_Declaration,
-            tauxDC: rc.Ratio_DC,
+            tauxRegime: rc.Ratio_DC,
             dateCreation: rc.Date_Creation,
             nomCreation: rc.Nom_Creation
         }));
@@ -99,7 +161,10 @@ export async function associateRegimeToClient(clientId: number, regimeId: number
             return { success: false, error: "Non authentifié" };
         }
 
-        const sessionId = parseInt(session.user.id);
+        const sessionId = Number(session.user.id);
+        if (!Number.isInteger(sessionId)) {
+            return { success: false, error: "Session utilisateur invalide" };
+        }
 
         // Vérifier si l'association existe déjà
         const existingAssociation = await prisma.tRegimesClients.findFirst({
@@ -114,14 +179,7 @@ export async function associateRegimeToClient(clientId: number, regimeId: number
         }
 
         // Créer l'association
-        const regimeClient = await prisma.tRegimesClients.create({
-            data: {
-                Client: clientId,
-                Regime_Declaration: regimeId,
-                Session: sessionId,
-                Date_Creation: new Date()
-            }
-        });
+        const regimeClient = await insertRegimeClientAssociation(clientId, regimeId, sessionId);
 
         revalidatePath("/client");
         return { 
@@ -152,7 +210,10 @@ export async function createRegimeClient(data: { clientId: number; regimeId: num
             return { success: false, error: "Non authentifié" };
         }
 
-        const sessionId = parseInt(session.user.id);
+        const sessionId = Number(session.user.id);
+        if (!Number.isInteger(sessionId)) {
+            return { success: false, error: "Session utilisateur invalide" };
+        }
 
         // Vérifier si l'association existe déjà
         const existingAssociation = await prisma.tRegimesClients.findFirst({
@@ -167,14 +228,11 @@ export async function createRegimeClient(data: { clientId: number; regimeId: num
         }
 
         // Créer l'association
-        const regimeClient = await prisma.tRegimesClients.create({
-            data: {
-                Client: data.clientId,
-                Regime_Declaration: data.regimeId,
-                Session: sessionId,
-                Date_Creation: new Date()
-            }
-        });
+        const regimeClient = await insertRegimeClientAssociation(
+            data.clientId,
+            data.regimeId,
+            sessionId
+        );
 
         revalidatePath("/client");
 
@@ -240,7 +298,7 @@ export async function getRegimesByClient(clientId: number) {
             id: regime.ID_Regime_Client,
             regimeId: regime.ID_Regime_Declaration,
             regimeLibelle: regime.Libelle_Regime_Declaration,
-            tauxDC: regime.Ratio_DC
+            tauxRegime: regime.Ratio_DC
         }));
 
         const serializedData = convertDecimalsToNumbers(adaptedData);

@@ -5,10 +5,9 @@
  * Chaque opération sur la base de données doit avoir un sessionId pour l'audit.
  */
 
-import { PrismaClient } from '@/generated/prisma/client';
 import { cookies } from 'next/headers';
+import prisma from '@/lib/prisma';
 
-const prisma = new PrismaClient();
 
 /**
  * Créer une nouvelle session SQL Server pour un utilisateur
@@ -18,15 +17,21 @@ const prisma = new PrismaClient();
  */
 
 export async function createSession(utilisateurId: number): Promise<number> {
-    const session = await prisma.tSessions.create({
-        data: {
-            Utilisateur: utilisateurId,
-            Debut_Session: new Date(),
-            Fin_Session: new Date(),
-        },
-    });
+    // Prisma n'expose pas l'opération create() pour TSessions dans ton client généré.
+    // On insère donc en SQL paramétré et on retourne l'ID auto-généré.
+    const now = new Date();
+    const insertedRows = await prisma.$queryRaw<Array<{ ID_Session: number }>>`
+        INSERT INTO dbo.TSessions ([Utilisateur], [Debut Session], [Fin Session])
+        OUTPUT INSERTED.[ID Session] AS ID_Session
+        VALUES (${utilisateurId}, ${now}, ${now});
+    `;
 
-    return session.ID_Session;
+    const createdSession = insertedRows[0];
+    if (!createdSession) {
+        throw new Error('Echec de creation de session SQL Server');
+    }
+
+    return createdSession.ID_Session;
 }
 
 

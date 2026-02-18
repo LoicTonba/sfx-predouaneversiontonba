@@ -45,7 +45,7 @@ model TCodesEtapes {
   Entite          Int                      @default(0, map: "DF_TCodesEtapes_Entite")
   Session         Int                      @default(0, map: "DF__TCodesEta__Sessi__2A164134")
   Date_Creation   DateTime                 @default(now(), map: "DF__TCodesEta__Date __2B0A656D") @map("Date Creation")
-  RowVer           Bytes?   @map("RowVer")
+  RowVer          Bytes?   @map("RowVer")
   TEtapesDossiers TEtapesDossiers[]
 
   @@unique([Libelle_Etape, Entite], map: "UQ_TCodesEtapes$Libelle Etape")
@@ -206,7 +206,7 @@ model TModesTransport {
 model TNotesDetail {
   ID_Note_Detail    Int                      @id(map: "TNotesDetail$PrimaryKey") @default(autoincrement()) @map("ID Note Detail")
   Colisage_Dossier  Int                      @map("Colisage Dossier")
-  Regime            String                   @default("N'", map: "DF_TNotesDetail_Regime") @db.NVarChar(2)
+  Regime            String                   @default("N'", map: "DF_TNotesDetail_Regime") @db.NVarChar(10)
   Nbre_Paquetage    Decimal                  @default(0, map: "DF_TNotesDetail_Nbre Paquetage") @map("Nbre Paquetage") @db.Decimal(24, 2)
   Valeur            Decimal                  @default(0, map: "DF__TNotesDet__Base __1DB06A4F") @db.Decimal(24, 2)
   Base_Poids_Brut   Decimal                  @default(0, map: "DF__TNotesDet__Base __1EA48E88") @map("Base Poids Brut") @db.Decimal(24, 2)
@@ -266,7 +266,7 @@ model TRegimesDeclarations {
   ID_Regime_Declaration      Int                      @id(map: "TRegimesDeclarations$PrimaryKey") @default(autoincrement()) @map("ID Regime Declaration")
   Regime_Douanier            Int                      @default(0, map: "DF_TRegimesDeclarations_Regime Douanier") @map("Regime Douanier")
   Libelle_Regime_Declaration String                   @unique(map: "UQ_TRegimesDeclarations$Libelle Regime Declaration") @map("Libelle Regime Declaration") @db.NVarChar(200)
-  Taux_DC                    Decimal                  @map("Taux DC") @db.Decimal(24, 3)
+  Taux_Regime                Decimal                  @map("Taux Regime") @db.Decimal(24, 3)
   Entite                     Int                      @default(0, map: "DF_TRegimesDeclarations_Entite")
   Session                    Int                      @default(0, map: "DF__TRegimesD__Sessi__0A9D95DB")
   Date_Creation              DateTime                 @default(now(), map: "DF__TRegimesD__Date __0B91BA14") @map("Date Creation")
@@ -275,7 +275,8 @@ model TRegimesDeclarations {
   TRegimesClients            TRegimesClients[]
   TRegimesDouaniers          TRegimesDouaniers        @relation(fields: [Regime_Douanier], references: [ID_Regime_Douanier], map: "FK_TRegimesDeclarations_TRegimesDouaniers")
 
-  @@unique([Taux_DC, Regime_Douanier], map: "UQ_TRegimesDeclarations$Taux DC")
+  @@unique([Taux_Regime, Regime_Douanier], map: "UQ_TRegimesDeclarations$Taux DC")
+  @@unique([Taux_Regime, Regime_Douanier], map: "UQ_TRegimesDeclarations$Taux Regime")
 }
 
 model TRegimesDouaniers {
@@ -453,6 +454,7 @@ view VRegimesDeclarations {
   ID_Regime_Douanier         Int
   Libelle_Regime_Douanier    String   @db.NVarChar(200)
   Libelle_Regime_Declaration String   @db.NVarChar(200)
+  Regime_Code                String?  @db.NVarChar(4000)
   Ratio_DC                   Decimal  @db.Decimal(24, 3)
   Ratio_TR                   Decimal? @db.Decimal(25, 3)
   ID_Entite                  Int
@@ -468,10 +470,27 @@ view VRegimesClients {
   ID_Regime_Douanier         Int
   Libelle_Regime_Douanier    String   @db.NVarChar(200)
   Libelle_Regime_Declaration String   @db.NVarChar(200)
+  Regime_Code                String?  @db.NVarChar(4000)
   Ratio_DC                   Decimal  @db.Decimal(24, 3)
   Ratio_TR                   Decimal? @db.Decimal(25, 3)
   Date_Creation              DateTime
   Nom_Creation               String?  @db.NVarChar(200)
+}
+
+view VTauxChange {
+  ID_Taux_Change Int
+  ID_Convertion  Int
+  Devise         String   @db.NVarChar(5)
+  Taux_Change    Decimal  @db.Decimal(24, 6)
+  Date_Creation  DateTime
+  Nom_Creation   String?  @db.NVarChar(200)
+}
+
+view VPermissionsBase {
+  ID_Permission_Base Int
+  Libelle_Permission String    @db.NVarChar(200)
+  Permission_Active  Boolean
+  Date_Activation    DateTime?
 }
 
 view VColisageDossiers {
@@ -496,47 +515,12 @@ view VColisageDossiers {
   ID_Regime_Douanier         Int?
   Libelle_Regime_Douanier    String?  @db.NVarChar(200)
   Libelle_Regime_Declaration String?  @db.NVarChar(200)
+  Regime_Code                String?  @db.NVarChar(4000)
   Ratio_DC                   Decimal? @db.Decimal(24, 3)
   Ratio_TR                   Decimal? @db.Decimal(25, 3)
   Regroupement_Client        String   @db.NVarChar(200)
   Date_Creation              DateTime
   Nom_Creation               String?  @db.NVarChar(200)
-}
-
-view VNotesDetail_Devises {
-  ID_Dossier                 Int
-  HS_Code                    String?  @db.NVarChar(50)
-  Pays_Origine               String   @db.NVarChar(200)
-  ID_Regime_Declaration      Int?
-  ID_Regime_Douanier         Int?
-  Libelle_Regime_Douanier    String?  @db.NVarChar(200)
-  Libelle_Regime_Declaration String?  @db.NVarChar(200)
-  Regime                     String   @db.NVarChar(2)
-  Regroupement_Client        String   @db.NVarChar(200)
-  Code_Devise                String   @db.NVarChar(5)
-  Valeur_Devise              Decimal? @db.Decimal(38, 6)
-  Ajustement_Devise          Decimal? @db.Decimal(38, 6)
-  Nbre_Paquetage             Decimal? @db.Decimal(38, 2)
-  Valeur                     Decimal? @db.Decimal(38, 2)
-  Base_Poids_Brut            Decimal? @db.Decimal(38, 2)
-  Base_Poids_Net             Decimal? @db.Decimal(38, 2)
-  Base_Volume                Decimal? @db.Decimal(38, 2)
-}
-
-view VTauxChange {
-  ID_Taux_Change Int
-  ID_Convertion  Int
-  Devise         String   @db.NVarChar(5)
-  Taux_Change    Decimal  @db.Decimal(24, 6)
-  Date_Creation  DateTime
-  Nom_Creation   String?  @db.NVarChar(200)
-}
-
-view VPermissionsBase {
-  ID_Permission_Base Int
-  Libelle_Permission String    @db.NVarChar(200)
-  Permission_Active  Boolean
-  Date_Activation    DateTime?
 }
 
 view VNotesDetail {
@@ -547,8 +531,9 @@ view VNotesDetail {
   ID_Regime_Douanier         Int?
   Libelle_Regime_Douanier    String?  @db.NVarChar(200)
   Libelle_Regime_Declaration String?  @db.NVarChar(200)
-  Regime                     String   @db.NVarChar(2)
   Regroupement_Client        String   @db.NVarChar(200)
+  Regime                     String   @db.NVarChar(10)
+  Code_Devise                String   @db.NVarChar(5)
   Nbre_Paquetage             Decimal? @db.Decimal(38, 2)
   Valeur                     Decimal? @db.Decimal(38, 2)
   Base_Poids_Brut            Decimal? @db.Decimal(38, 2)

@@ -37,7 +37,7 @@ export async function createRegimeDeclaration(data: TRegimeDeclarationCreate) {
       (
         [Regime Douanier],
         [Libelle Regime Declaration],
-        [Taux DC],
+        [Taux Regime],
         [Entite],
         [Session],
         [Date Creation]
@@ -47,7 +47,7 @@ export async function createRegimeDeclaration(data: TRegimeDeclarationCreate) {
       (
         ${Number(validatedData.regimeDouanierId)},
         ${validatedData.libelle},
-        ${validatedData.tauxDC},
+        ${validatedData.tauxRegime},
         0,
         ${Number(session.user.id)},
         SYSDATETIME()
@@ -98,7 +98,7 @@ export async function getRegimeDeclarationById(id: string) {
         id: regimeDeclaration.ID_Regime_Declaration,
         libelleRegimeDeclaration:
           regimeDeclaration.Libelle_Regime_Declaration,
-        tauxDC: Number(regimeDeclaration.Ratio_DC),
+        tauxRegime: Number(regimeDeclaration.Ratio_DC),
         regimeDouanier: regimeDeclaration.ID_Regime_Douanier,
         dateCreation: regimeDeclaration.Date_Creation.toISOString(),
         tRegimesDouaniers: {
@@ -159,7 +159,7 @@ export async function getAllRegimeDeclarations(
       data: regimeDeclarations.map((rd) => ({
         id: rd.ID_Regime_Declaration,
         libelleRegimeDeclaration: rd.Libelle_Regime_Declaration,
-        tauxDC: Number(rd.Ratio_DC),
+        tauxRegime: Number(rd.Ratio_DC),
         regimeDouanier: rd.ID_Regime_Douanier,
         dateCreation: rd.Date_Creation.toISOString(),
         tRegimesDouaniers: {
@@ -190,8 +190,8 @@ export async function updateRegimeDeclaration(id: string, data: TRegimeDeclarati
           ? Prisma.sql`[Libelle Regime Declaration] = ${validatedData.libelle},`
           : Prisma.sql``}
 
-        ${validatedData.tauxDC !== undefined
-          ? Prisma.sql`[Taux DC] = ${validatedData.tauxDC},`
+        ${validatedData.tauxRegime !== undefined
+          ? Prisma.sql`[Taux Regime] = ${validatedData.tauxRegime},`
           : Prisma.sql``}
 
         ${validatedData.regimeDouanierId
@@ -214,7 +214,7 @@ export async function updateRegimeDeclaration(id: string, data: TRegimeDeclarati
       data: {
         id: updated?.ID_Regime_Declaration,
         libelleRegimeDeclaration: updated?.Libelle_Regime_Declaration,
-        tauxDC: Number(updated?.Ratio_DC),
+        tauxRegime: Number(updated?.Ratio_DC),
       }
     };
   } catch (error) {
@@ -266,7 +266,7 @@ export async function deleteRegimeDeclaration(id: string) {
       data: {
         id: existing.ID_Regime_Declaration,
         libelleRegimeDeclaration: existing.Libelle_Regime_Declaration,
-        tauxDC: Number(existing.Ratio_DC),
+        tauxRegime: Number(existing.Ratio_DC),
       },
     };
   } catch (error) {
@@ -299,7 +299,7 @@ export async function getAllRegimeDeclarationsForSelect() {
       data: regimesDeclarations.map(rd => ({
         id: rd.ID_Regime_Declaration,
         libelleRegimeDeclaration: rd.Libelle_Regime_Declaration,
-        tauxDC: Number(rd.Ratio_DC),
+        tauxRegime: Number(rd.Ratio_DC),
         tRegimesDouaniers: {
           libelleRegimeDouanier: rd.Libelle_Regime_Douanier,
         },

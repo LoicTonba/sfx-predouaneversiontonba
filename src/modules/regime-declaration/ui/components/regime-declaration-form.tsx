@@ -17,6 +17,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { createRegimeDeclaration, updateRegimeDeclaration } from "../../server/actions";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface RegimeDeclarationFormProps {
     onSuccess?: (id?: string) => void;
@@ -24,7 +25,7 @@ interface RegimeDeclarationFormProps {
     initialValues?: {
         id?: string;
         libelle: string;
-        tauxDC: number;
+        tauxRegime: number;
         regimeDouanierId: string;
     };
 }
@@ -38,35 +39,45 @@ export const RegimeDeclarationForm = ({
         resolver: zodResolver(TRegimeDeclarationCreateSchema),
         defaultValues: {
             libelle: initialValues?.libelle ?? "",
-            // Convertir de décimal (0-1) vers pourcentage (0-100) pour l'affichage
-            tauxDC: initialValues?.tauxDC ? Number(initialValues.tauxDC) * 100 : 0,
+            // Convertir de décimal vers pourcentage pour l'affichage si c'est un ratio DC
+            tauxRegime: initialValues?.tauxRegime 
+                ? (Number(initialValues.tauxRegime) >= 0 && Number(initialValues.tauxRegime) <= 1 
+                    ? Number(initialValues.tauxRegime) * 100 
+                    : Number(initialValues.tauxRegime))
+                : 0,
             regimeDouanierId: "0", // Toujours régime 0 par défaut
         },
     });
 
-    // Watch le taux DC pour auto-remplir le libellé
-    const tauxDC = form.watch("tauxDC");
+    // Watch le taux Regime pour auto-remplir le libellé
+    const tauxRegime = form.watch("tauxRegime");
 
     const isPending = form.formState.isSubmitting;
     const isEdit = !!initialValues?.id;
 
-    // Auto-remplir le libellé quand le taux DC change
+      // Auto-remplir le libellé quand le taux Regime change
     useEffect(() => {
-        if (tauxDC !== undefined) {
-            const tauxTR = 100 - tauxDC;
+        if (tauxRegime !== undefined) {
             let autoLibelle = "";
 
-            if (tauxDC === 0) {
+            if (tauxRegime === -2) {
+                autoLibelle = "TTC";
+            } else if (tauxRegime === -1) {
+                autoLibelle = "100% TR";
+            } else if (tauxRegime === 0) {
                 autoLibelle = "Exonération";
-            } else if (tauxTR === 0) {
+            } else if (tauxRegime === 100) {
                 autoLibelle = "100% DC";
-            } else {
-                autoLibelle = `${tauxTR.toFixed(2)}% TR et ${tauxDC.toFixed(2)}% DC`;
+            } else if (tauxRegime > 0 && tauxRegime < 100) {
+                const tauxTR = 100 - tauxRegime;
+                autoLibelle = `${tauxTR.toFixed(2)}% TR et ${tauxRegime.toFixed(2)}% DC`;
             }
 
-            form.setValue("libelle", autoLibelle, { shouldValidate: true });
+            if (autoLibelle) {
+                form.setValue("libelle", autoLibelle, { shouldValidate: true });
+            }
         }
-    }, [tauxDC, form]);
+    }, [tauxRegime, form]);
 
     const onSubmit = async (data: TRegimeDeclarationCreate) => {
         console.log('🚀 [RegimeDeclarationForm] onSubmit - data:', data);
@@ -77,20 +88,28 @@ export const RegimeDeclarationForm = ({
         // S'assurer que le régime douanier est toujours 0 (régime par défaut)
         finalData.regimeDouanierId = "0";
 
-        // Convertir le taux DC de pourcentage (0-100) en décimal (0-1) pour la base de données
-        const tauxDCPourcentage = finalData.tauxDC; // Garder la valeur originale pour l'affichage
-        finalData.tauxDC = finalData.tauxDC / 100; // Convertir en décimal pour la BD
+        // Convertir le taux Regime selon le cas
+        if (finalData.tauxRegime === -2 || finalData.tauxRegime === -1) {
+            // TTC ou 100% TR - garder tel quel
+        } else if (finalData.tauxRegime >= 0 && finalData.tauxRegime <= 100) {
+            // Convertir de pourcentage (0-100) en décimal (0-1) pour la BD
+            finalData.tauxRegime = finalData.tauxRegime / 100;
+        }
 
         // S'assurer que le libellé est rempli
         if (!finalData.libelle || finalData.libelle.trim() === "") {
-            const tauxTR = 100 - tauxDCPourcentage;
-            
-            if (tauxDCPourcentage === 0) {
+            if (finalData.tauxRegime === -2) {
+                finalData.libelle = "TTC";
+            } else if (finalData.tauxRegime === -1) {
+                finalData.libelle = "100% TR";
+            } else if (finalData.tauxRegime === 0) {
                 finalData.libelle = "Exonération";
-            } else if (tauxTR === 0) {
+            } else if (finalData.tauxRegime === 1) {
                 finalData.libelle = "100% DC";
-            } else {
-                finalData.libelle = `${tauxTR.toFixed(2)}% TR et ${tauxDCPourcentage.toFixed(2)}% DC`;
+            } else if (finalData.tauxRegime > 0 && finalData.tauxRegime < 1) {
+                const tauxDCPct = finalData.tauxRegime * 100;
+                const tauxTRPct = 100 - tauxDCPct;
+                finalData.libelle = `${tauxTRPct.toFixed(2)}% TR et ${tauxDCPct.toFixed(2)}% DC`;
             }
         }
 
@@ -137,10 +156,10 @@ export const RegimeDeclarationForm = ({
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                     control={form.control}
-                    name="tauxDC"
+                    name="tauxRegime"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Taux DC*</FormLabel>
+                            <FormLabel>Taux Régime*</FormLabel>
                             <FormControl>
                                 <Input
                                     {...field}

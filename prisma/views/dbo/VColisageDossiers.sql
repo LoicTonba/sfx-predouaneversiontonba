@@ -20,6 +20,7 @@ SELECT
   N.[ID_Regime_Douanier],
   N.[Libelle_Regime_Douanier],
   N.[Libelle_Regime_Declaration],
+  N.[Regime_Code],
   N.[Ratio_DC],
   N.[Ratio_TR],
   A.[Regroupement Client] AS [Regroupement_Client],

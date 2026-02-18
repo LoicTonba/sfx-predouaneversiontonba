@@ -5,6 +5,18 @@ import { fr } from "date-fns/locale";
 import { ColumnDef } from "@tanstack/react-table";
 import { RegimeDeclarationWithDouanier } from "../../types";
 
+// Fonction helper pour formater le taux régime
+function formatTauxRegime(taux: number): string {
+    if (taux === -2) return "TTC";
+    if (taux === -1) return "100% TR";
+    if (taux === 0) return "EXO";
+    if (taux === 1) return "100% DC";
+    if (taux > 0 && taux < 1) {
+        return `${(taux * 100).toFixed(2)}% DC`;
+    }
+    return taux.toString();
+}
+
 export const columns: ColumnDef<RegimeDeclarationWithDouanier>[] = [
     {
         accessorKey: "libelle",
@@ -14,14 +26,15 @@ export const columns: ColumnDef<RegimeDeclarationWithDouanier>[] = [
         ),
     },
     {
-        accessorKey: "taux_dc",
-        header: "Taux DC",
-        cell: ({ row }) => (
-            <span className="text-sm">{(row.original.tauxDC * 100).toFixed(2)}%</span>
-        ),
+        accessorKey: "tauxRegime",
+        header: "Taux Régime",
+        cell: ({ row }) => {
+            const taux = row.original.tauxRegime;
+            return <span className="text-sm">{formatTauxRegime(Number(taux))}</span>;
+        },
     },
     {
-        accessorKey: "date_creation",
+        accessorKey: "createdAt",
         header: "Créé le",
         cell: ({ row }) => {
             const date = row.original.dateCreation;

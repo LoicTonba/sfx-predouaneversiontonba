@@ -19,12 +19,19 @@ import { RegimeDeclarationIdHeader } from "../components/regime-declaration-id-h
 interface RegimeDeclarationData {
     id: number;
     libelleRegimeDeclaration: string;
-    tauxDC: number;
+    tauxRegime: number;
     regimeDouanier: number;
+    session: number;
     dateCreation: string | null;
+    rowVer: any;
     tRegimesDouaniers?: {
         id: number;
+        codeRegimeDouanier: string;
         libelleRegimeDouanier: string;
+    } | null;
+    tUtilisateurs?: {
+        id: number;
+        nomUtilisateur: string;
     } | null;
 }
 
@@ -64,10 +71,15 @@ export const RegimeDeclarationIdView = ({
         }
     };
 
-    // Calcul des pourcentages TR et DC (convertir de décimal en pourcentage)
-    const tauxDCPourcentage = regimeDeclaration.tauxDC * 100;
-    const tauxTRPourcentage = 100 - tauxDCPourcentage;
-    const isExoneration = tauxDCPourcentage === 0;
+// Calcul des pourcentages TR et DC (convertir de décimal en pourcentage si nécessaire)
+    const tauxRegimeValue = Number(regimeDeclaration.tauxRegime);
+    const tauxRegimePourcentage = tauxRegimeValue >= -2 && tauxRegimeValue <= 1 
+        ? (tauxRegimeValue > 0 && tauxRegimeValue < 1 ? tauxRegimeValue * 100 : tauxRegimeValue)
+        : tauxRegimeValue;
+    const tauxTRPourcentage = tauxRegimePourcentage > 0 && tauxRegimePourcentage < 100 
+        ? 100 - tauxRegimePourcentage 
+        : 0;
+    const isExoneration = tauxRegimePourcentage === 0;
 
     return (
         <>
@@ -78,7 +90,7 @@ export const RegimeDeclarationIdView = ({
     initialValues={{
         id: regimeDeclaration.id.toString(),
         libelle: regimeDeclaration.libelleRegimeDeclaration,
-        tauxDC: regimeDeclaration.tauxDC,
+        tauxRegime: regimeDeclaration.tauxRegime,
         regimeDouanierId: regimeDeclaration.regimeDouanier.toString(),
     }}
 />
@@ -109,13 +121,19 @@ export const RegimeDeclarationIdView = ({
                                     </p>
                                 </div>
 
-                                {/* Taux DC */}
+                                {/* Taux Régime */}
                                 <div>
                                     <div className="flex items-center gap-2 mb-2">
                                         <Percent className="w-4 h-4 text-muted-foreground" />
-                                        <p className="text-sm font-semibold text-muted-foreground">TAUX DC</p>
+                                        <p className="text-sm font-semibold text-muted-foreground">TAUX RÉGIME</p>
                                     </div>
-                                    <p className="text-base font-medium">{tauxDCPourcentage.toFixed(2)}%</p>
+                                      <p className="text-base font-medium">
+                                        {tauxRegimePourcentage === -2 ? "TTC" :
+                                         tauxRegimePourcentage === -1 ? "100% TR" :
+                                         tauxRegimePourcentage === 0 ? "EXO" :
+                                         tauxRegimePourcentage === 1 ? "100% DC" :
+                                         `${tauxRegimePourcentage.toFixed(2)}%`}
+                                    </p>
                                 </div>
                             </div>
 
@@ -163,13 +181,19 @@ export const RegimeDeclarationIdView = ({
                         </CardHeader>
                         <CardContent>
                             <p className="text-sm">
-                                {isExoneration ? (
+                                  {isExoneration ? (
                                     <span className="text-amber-600 font-semibold">Exonération (DC = 0%)</span>
                                 ) : tauxTRPourcentage === 0 ? (
                                     <span className="text-blue-600 font-semibold">100% Déclaration</span>
+                                ) : tauxRegimePourcentage === -2 ? (
+                                    <span className="text-purple-600 font-semibold">TTC</span>
+                                ) : tauxRegimePourcentage === -1 ? (
+                                    <span className="text-blue-600 font-semibold">100% TR</span>
+                                ) : tauxRegimePourcentage === 100 ? (
+                                    <span className="text-orange-600 font-semibold">100% DC</span>
                                 ) : (
                                     <span className="text-green-600 font-semibold">
-                                        {tauxTRPourcentage.toFixed(1)}% TR + {tauxDCPourcentage.toFixed(1)}% DC
+                                        {tauxTRPourcentage.toFixed(1)}% TR + {tauxRegimePourcentage.toFixed(1)}% DC
                                     </span>
                                 )}
                             </p>

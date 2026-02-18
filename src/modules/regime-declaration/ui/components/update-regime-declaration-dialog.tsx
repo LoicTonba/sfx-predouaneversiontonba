@@ -7,7 +7,7 @@ interface UpdateRegimeDeclarationDialogProps {
     initialValues: {
         id: string;
         libelle: string;
-        tauxDC: number;
+        tauxRegime: number;
         regimeDouanierId: string;
     };
 }

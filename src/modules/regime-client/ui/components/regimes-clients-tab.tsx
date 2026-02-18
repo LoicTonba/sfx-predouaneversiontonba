@@ -21,7 +21,7 @@ interface RegimeClient {
     clientNom: string;
     regimeId: number;
     regimeLibelle: string;
-    tauxDC: number;
+    tauxRegime: number;
     dateCreation: string;
     nomCreation: string;
 }
@@ -122,13 +122,39 @@ export const RegimesClientsTab = () => {
             ),
         },
         {
-            accessorKey: "tauxDC",
-            header: "Taux DC",
+            accessorKey: "tauxRegime",
+            header: "Taux Régime",
             cell: ({ row }) => {
-                const taux = row.getValue("tauxDC") as number;
+                // Garde-fou: évite le crash `undefined.toString()` si la donnée est absente.
+                const rawTaux = row.getValue("tauxRegime");
+                const taux = typeof rawTaux === "number" ? rawTaux : Number(rawTaux);
+                if (!Number.isFinite(taux)) {
+                    return <Badge variant="outline">-</Badge>;
+                }
+                let label = "";
+                let variant: "default" | "secondary" | "destructive" | "outline" = "outline";
+                
+                if (taux === -2) {
+                    label = "TTC";
+                    variant = "secondary";
+                } else if (taux === -1) {
+                    label = "100% TR";
+                    variant = "default";
+                } else if (taux === 0) {
+                    label = "EXO";
+                    variant = "outline";
+                } else if (taux === 1) {
+                    label = "100% DC";
+                    variant = "default";
+                } else if (taux > 0 && taux < 1) {
+                    label = `${(taux * 100).toFixed(1)}% DC`;
+                    variant = "outline";
+                } else {
+                    label = String(taux);
+                }
                 return (
-                    <Badge variant="outline">
-                        {(taux * 100).toFixed(1)}%
+                    <Badge variant={variant}>
+                        {label}
                     </Badge>
                 );
             },

@@ -6,7 +6,6 @@ import { LoadingState } from "@/components/loading-state";
 import { columns } from "../components/columns";
 import { useRouter } from "next/navigation";
 import { EmptyState } from "@/components/empty-state";
-import { DataPagination } from "@/components/data-pagination";
 import { useMemo, useState } from "react";
 import { useClientsSearch } from "../../hooks/use-clients-search";
 import { DEFAULT_PAGE_SIZE, DEFAULT_PAGE } from "@/constants";
@@ -42,7 +41,7 @@ export const ClientView = ({ client, total = 0, currentPage = DEFAULT_PAGE }: Pr
       c.Nom_Client?.toLowerCase().includes(searchLower) ||
       c.nom?.toLowerCase().includes(searchLower)
     );
-  }, [client, search]);
+  }, [client, search])
 
   // Paginer les données filtrées
   const paginatedClients = useMemo(() => {
@@ -52,10 +51,6 @@ export const ClientView = ({ client, total = 0, currentPage = DEFAULT_PAGE }: Pr
   }, [filteredClients, page, pageSize]);
 
   const totalPages = filteredClients.length > 0 ? Math.ceil(filteredClients.length / pageSize) : 1;
-
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-  };
 
   return (
     <div className="flex-1 pb-4 px-4 md:px-8 flex flex-col gap-y-4">
