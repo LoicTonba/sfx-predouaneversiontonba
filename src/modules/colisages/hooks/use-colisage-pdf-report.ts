@@ -49,14 +49,14 @@ export const useColisagePDFReport = () => {
     // 1️⃣ DÉBUT DE LA GÉNÉRATION
     // --------------------------------------------------------------------
     setIsGenerating(true);  // Active l'état de chargement
-    
+
     try {
       // ----------------------------------------------------------------
       // 1.1️⃣ RÉCUPÉRATION DES DONNÉES
       // ----------------------------------------------------------------
       // Appelle l'action serveur pour récupérer les données du dossier et des colisages
       const result = await getColisageReportData(dossierId);
-      
+
       // ----------------------------------------------------------------
       // 1.2️⃣ VALIDATION DES DONNÉES
       // ----------------------------------------------------------------
@@ -79,7 +79,7 @@ export const useColisagePDFReport = () => {
       const pdfReport = new ColisagePDFReportV2();
       // Génère le rapport PDF avec les informations du dossier et les colisages
       await pdfReport.generateReport(result.data.dossierInfo, result.data.colisages);
-      
+
       // ----------------------------------------------------------------
       // 1.4️⃣ NOTIFICATION DE SUCCÈS
       // ----------------------------------------------------------------

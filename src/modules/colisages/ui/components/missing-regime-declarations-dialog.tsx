@@ -199,7 +199,7 @@ export const MissingRegimeDeclarationsDialog = ({
                     }}
                     initialValues={currentRegime ? {
                         libelle: currentRegime.libelle,
-                        tauxDC: currentRegime.ratio,
+                        tauxRegime: currentRegime.ratio,
                         regimeDouanierId: "0"
                     } : undefined}
                 />

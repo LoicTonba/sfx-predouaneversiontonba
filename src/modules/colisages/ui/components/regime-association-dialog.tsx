@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Link2, Loader2 } from "lucide-react";
-import { toast } from "sonner";
 
 interface RegimeAssociationDialogProps {
     open: boolean;
@@ -22,6 +21,16 @@ interface RegimeAssociationDialogProps {
     clientName: string;
     onConfirm: () => void;
     onCancel: () => void;
+}
+
+function formatRatioDisplay(ratio: number): string {
+    if (ratio === -2) return "TTC";
+    if (ratio === -1) return "100% TR";
+    if (ratio === 0) return "EXO";
+    if (ratio === 1) return "100% DC";
+
+    const decimal = ratio > 1 ? ratio / 100 : ratio;
+    return `${(decimal * 100).toFixed(2)}% DC`;
 }
 
 export const RegimeAssociationDialog = ({
@@ -78,7 +87,7 @@ export const RegimeAssociationDialog = ({
                             <div className="flex flex-wrap gap-2">
                                 {regimes.map((regime, index) => (
                                     <Badge key={index} variant="outline" className="text-sm">
-                                        {regime.libelle} ({regime.ratio}% DC)
+                                        {regime.libelle} ({formatRatioDisplay(regime.ratio)})
                                     </Badge>
                                 ))}
                             </div>

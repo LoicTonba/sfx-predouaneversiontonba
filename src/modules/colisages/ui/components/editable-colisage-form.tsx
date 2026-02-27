@@ -35,7 +35,7 @@ type EditableColisage = z.infer<typeof EditableColisageSchema>;
 
 interface EditableColisageFormProps {
   initialValues: {
-    rowKey: string;
+    uploadKey: string;
     hscode?: string;
     description: string;
     numeroCommande?: string;
@@ -94,7 +94,7 @@ export const EditableColisageForm = ({
           <div>
             <span className="text-xs text-muted-foreground">Row Key</span>
             <Badge variant="outline" className="block w-fit font-mono text-xs mt-1">
-              {initialValues.rowKey}
+              {initialValues.uploadKey}
             </Badge>
           </div>
           <div>

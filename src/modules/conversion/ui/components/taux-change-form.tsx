@@ -60,7 +60,7 @@ export const TauxChangeForm = ({
         mode: "onChange",
         defaultValues: {
             deviseId: "",
-            tauxChange: "0.0",
+            tauxChange: "",
         },
     });
 

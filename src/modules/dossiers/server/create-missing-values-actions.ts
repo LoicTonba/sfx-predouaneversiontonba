@@ -204,14 +204,56 @@ export async function createMissingHSCodes(hscodes: string[]) {
             // --------------------------------------------------------------------
             // 2️⃣ CRÉATION DES HS CODES MANQUANTS
             // --------------------------------------------------------------------
-            const result = await prisma.tHSCodes.create({
-                data: {
-                    HS_Code: hscode,
-                    Libelle_HS_Code: `HS Code ${hscode}`,
-                    Session: parseInt(session.user.id),
-                    Date_Creation: new Date(),
-                },
-            });
+            // Prisma n'expose pas createOne sur THSCodes dans ce projet.
+            // On insère donc via SQL paramétré et on récupère la ligne créée.
+            const sessionId = Number(session.user.id);
+            if (!Number.isInteger(sessionId)) {
+                throw new Error("Session utilisateur invalide");
+            }
+
+            const now = new Date();
+            const insertedRows = await prisma.$queryRaw<Array<{
+                ID_HS_Code: number;
+                HS_Code: string;
+                Libelle_HS_Code: string;
+                Entite: number;
+                Session: number;
+                Date_Creation: Date;
+            }>>`
+                DECLARE @Inserted TABLE (
+                    ID_HS_Code INT,
+                    HS_Code NVARCHAR(50),
+                    Libelle_HS_Code NVARCHAR(200),
+                    Entite INT,
+                    Session INT,
+                    Date_Creation DATETIME
+                );
+
+                INSERT INTO dbo.THSCodes ([HS Code], [Libelle HS Code], [Entite], [Session], [Date Creation])
+                OUTPUT
+                    INSERTED.[ID HS Code],
+                    INSERTED.[HS Code],
+                    INSERTED.[Libelle HS Code],
+                    INSERTED.[Entite],
+                    INSERTED.[Session],
+                    INSERTED.[Date Creation]
+                INTO @Inserted (ID_HS_Code, HS_Code, Libelle_HS_Code, Entite, Session, Date_Creation)
+                VALUES (${hscode}, ${`HS Code ${hscode}`}, ${0}, ${sessionId}, ${now});
+
+                SELECT
+                    I.ID_HS_Code,
+                    I.HS_Code,
+                    I.Libelle_HS_Code,
+                    I.Entite,
+                    I.Session,
+                    I.Date_Creation
+                FROM @Inserted AS I;
+            `;
+
+            const result = insertedRows[0];
+            if (!result) {
+                throw new Error(`Echec de creation du HS Code ${hscode}`);
+            }
             created.push(result);
         }
 

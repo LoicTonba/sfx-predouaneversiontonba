@@ -10,7 +10,7 @@ import { EditableColisageForm } from "./editable-colisage-form";
 
 interface ParsedRow {
     _rowIndex: number;
-    rowKey: string;
+    uploadKey: string;
     hscode?: string;
     description: string;
     numeroCommande?: string;
@@ -69,7 +69,7 @@ export const EditImportColisageDialog = ({
 
     // Convertir les données pour le formulaire
     const formData = {
-        rowKey: row.rowKey,
+        uploadKey: row.uploadKey,
         hscode: row.hscode,
         description: row.description,
         numeroCommande: row.numeroCommande,
@@ -91,7 +91,7 @@ export const EditImportColisageDialog = ({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Modifier le colisage - {row.rowKey}</DialogTitle>
+                    <DialogTitle>Modifier le colisage - {row.uploadKey}</DialogTitle>
                 </DialogHeader>
                 
                 <EditableColisageForm

@@ -136,93 +136,93 @@ export const GenererNotesDialog = ({
                 onConfirm={handleCreateMissingRates}
             />
             <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                    <DialogTitle>Générer les notes de détail</DialogTitle>
-                    <DialogDescription>
-                        Sélectionnez la date de déclaration pour générer les notes de détail du dossier.
-                    </DialogDescription>
-                </DialogHeader>
+                <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle>Générer les notes de détail</DialogTitle>
+                        <DialogDescription>
+                            Sélectionnez la date de déclaration pour générer les notes de détail du dossier.
+                        </DialogDescription>
+                    </DialogHeader>
 
-                <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="date-declaration">Date de déclaration</Label>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    className={cn(
-                                        "w-full justify-start text-left font-normal",
-                                        !dateDeclaration && "text-muted-foreground"
-                                    )}
-                                    disabled={isChecking || isGenerating}
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {dateDeclaration ? (
-                                        format(dateDeclaration, "PPP", { locale: fr })
-                                    ) : (
-                                        <span>Sélectionner une date</span>
-                                    )}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={dateDeclaration}
-                                    onSelect={handleDateSelect}
-                                    disabled={(date) => date > new Date()}
-                                    initialFocus
-                                    locale={fr}
-                                />
-                            </PopoverContent>
-                        </Popover>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="date-declaration">Date de déclaration</Label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        className={cn(
+                                            "w-full justify-start text-left font-normal",
+                                            !dateDeclaration && "text-muted-foreground"
+                                        )}
+                                        disabled={isChecking || isGenerating}
+                                    >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {dateDeclaration ? (
+                                            format(dateDeclaration, "PPP", { locale: fr })
+                                        ) : (
+                                            <span>Sélectionner une date</span>
+                                        )}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={dateDeclaration}
+                                        onSelect={handleDateSelect}
+                                        disabled={(date) => date > new Date()}
+                                        initialFocus
+                                        locale={fr}
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+
+                        {isChecking && (
+                            <Alert>
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertDescription>
+                                    Vérification de la conversion pour cette date...
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
+                        {conversionExists === false && (
+                            <Alert variant="destructive">
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertDescription>
+                                    Aucune conversion trouvée pour cette date. Veuillez créer une conversion avant de générer les notes de détail.
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
+                        {conversionExists === true && (
+                            <Alert className="border-green-500 bg-green-50">
+                                <AlertCircle className="h-4 w-4 text-green-600" />
+                                <AlertDescription className="text-green-600">
+                                    Conversion disponible pour cette date. Vous pouvez générer les notes de détail.
+                                </AlertDescription>
+                            </Alert>
+                        )}
                     </div>
 
-                    {isChecking && (
-                        <Alert>
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertDescription>
-                                Vérification de la conversion pour cette date...
-                            </AlertDescription>
-                        </Alert>
-                    )}
-
-                    {conversionExists === false && (
-                        <Alert variant="destructive">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertDescription>
-                                Aucune conversion trouvée pour cette date. Veuillez créer une conversion avant de générer les notes de détail.
-                            </AlertDescription>
-                        </Alert>
-                    )}
-
-                    {conversionExists === true && (
-                        <Alert className="border-green-500 bg-green-50">
-                            <AlertCircle className="h-4 w-4 text-green-600" />
-                            <AlertDescription className="text-green-600">
-                                Conversion disponible pour cette date. Vous pouvez générer les notes de détail.
-                            </AlertDescription>
-                        </Alert>
-                    )}
-                </div>
-
-                <DialogFooter>
-                    <Button
-                        variant="outline"
-                        onClick={() => onOpenChange(false)}
-                        disabled={isGenerating}
-                    >
-                        Annuler
-                    </Button>
-                    <Button
-                        onClick={handleGenerer}
-                        disabled={!dateDeclaration || conversionExists !== true || isGenerating}
-                    >
-                        {isGenerating ? "Génération..." : "Générer"}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => onOpenChange(false)}
+                            disabled={isGenerating}
+                        >
+                            Annuler
+                        </Button>
+                        <Button
+                            onClick={handleGenerer}
+                            disabled={!dateDeclaration || conversionExists !== true || isGenerating}
+                        >
+                            {isGenerating ? "Génération..." : "Générer"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 };

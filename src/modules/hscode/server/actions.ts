@@ -5,6 +5,71 @@ import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
+/**
+ * Cree un HS Code via SQL brut parametre.
+ *
+ * Pourquoi:
+ * - sur le client Prisma genere actuel, `tHSCodes.create()` echoue
+ *   avec "createOne ... does not match any query";
+ * - cette fonction centralise l'insert pour la creation manuelle
+ *   et l'import Excel.
+ */
+async function insertHSCode(params: {
+  hsCode: string;
+  libelleHSCode: string;
+  sessionId: number;
+}) {
+  const now = new Date();
+
+  // OUTPUT ... INTO reste compatible si des triggers existent/arrivent plus tard.
+  const insertedRows = await prisma.$queryRaw<
+    Array<{
+      ID_HS_Code: number;
+      HS_Code: string;
+      Libelle_HS_Code: string;
+      Entite: number;
+      Session: number;
+      Date_Creation: Date;
+    }>
+  >`
+    DECLARE @Inserted TABLE (
+      ID_HS_Code INT,
+      HS_Code NVARCHAR(50),
+      Libelle_HS_Code NVARCHAR(200),
+      Entite INT,
+      Session INT,
+      Date_Creation DATETIME
+    );
+
+    INSERT INTO dbo.THSCodes ([HS Code], [Libelle HS Code], [Entite], [Session], [Date Creation])
+    OUTPUT
+      INSERTED.[ID HS Code],
+      INSERTED.[HS Code],
+      INSERTED.[Libelle HS Code],
+      INSERTED.[Entite],
+      INSERTED.[Session],
+      INSERTED.[Date Creation]
+    INTO @Inserted (ID_HS_Code, HS_Code, Libelle_HS_Code, Entite, Session, Date_Creation)
+    VALUES (${params.hsCode}, ${params.libelleHSCode}, ${0}, ${params.sessionId}, ${now});
+
+    SELECT
+      I.ID_HS_Code,
+      I.HS_Code,
+      I.Libelle_HS_Code,
+      I.Entite,
+      I.Session,
+      I.Date_Creation
+    FROM @Inserted AS I;
+  `;
+
+  const createdHSCode = insertedRows[0];
+  if (!createdHSCode) {
+    throw new Error("Echec de creation du HS Code");
+  }
+
+  return createdHSCode;
+}
+
 /* ============================================================================
    CREATE
 ============================================================================ */
@@ -22,13 +87,26 @@ export async function createHSCode(data: any) {
       throw new Error("Missing User Session");
     }
 
-    const hscode = await prisma.tHSCodes.create({
-      data: {
-        HS_Code: data.code,
-        Libelle_HS_Code: data.libelle,
-        Session: parseInt(session.user.id),
-        Date_Creation: new Date(),
-      },
+    // Validation minimale: evite les inserts avec des champs vides.
+    const hsCode = String(data.code ?? "").trim();
+    const libelleHSCode = String(data.libelle ?? "").trim();
+    if (!hsCode) {
+      throw new Error("Le code HS est obligatoire");
+    }
+    if (!libelleHSCode) {
+      throw new Error("Le libelle HS Code est obligatoire");
+    }
+
+    const sessionId = Number(session.user.id);
+    if (!Number.isInteger(sessionId)) {
+      throw new Error("Session utilisateur invalide");
+    }
+
+    // Insertion SQL centralisee (contourne l'absence de createOne expose par Prisma ici).
+    const hscode = await insertHSCode({
+      hsCode,
+      libelleHSCode,
+      sessionId,
     });
 
     revalidatePath("/hscode");
@@ -126,8 +204,6 @@ export async function getAllHSCodes(
     return { success: false, error };
   }
 }
-
-
 
 /* ============================================================================
    UPDATE
@@ -376,14 +452,15 @@ export async function importHSCodesFromExcel(
           item.status === "new" &&
           (mode === "create" || mode === "both")
         ) {
-           // Créer nouveau HS Code
-          await prisma.tHSCodes.create({
-            data: {
-              HS_Code: hsCode,
-              Libelle_HS_Code: description,
-              Session: Number(session.user.id),
-              Date_Creation: new Date(),
-            },
+          // Créer nouveau HS Code via le helper SQL.
+          const sessionId = Number(session.user.id);
+          if (!Number.isInteger(sessionId)) {
+            throw new Error("Session utilisateur invalide");
+          }
+          await insertHSCode({
+            hsCode,
+            libelleHSCode: description,
+            sessionId,
           });
           created++;
         }

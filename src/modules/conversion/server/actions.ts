@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/modules/auth/server/actions";
 
 /**
- * Récupérer toutes les conversions via VConvertions
+ * Recuperer toutes les conversions via VConvertions
  */
 export async function getAllConversions() {
     try {
@@ -13,20 +13,19 @@ export async function getAllConversions() {
             SELECT * FROM VConvertions
             ORDER BY Date_Convertion DESC
         `;
-        
+
         return { success: true, data: conversions };
     } catch (error) {
-        console.error("Erreur lors de la récupération des conversions:", error);
-        return { success: false, error: "Impossible de récupérer les conversions" };
+        console.error("Erreur lors de la recuperation des conversions:", error);
+        return { success: false, error: "Impossible de recuperer les conversions" };
     }
 }
 
 /**
- * Récupérer une conversion par ID via VConvertions
+ * Recuperer une conversion par ID via VConvertions
  */
 export async function getConversionById(id: string) {
     try {
-        console.log("id", id);
         const conversionId = Number(id);
         if (Number.isNaN(conversionId)) {
             return { success: false, error: "ID invalide" };
@@ -37,12 +36,10 @@ export async function getConversionById(id: string) {
             WHERE ID_Convertion = ${conversionId}
         `;
         if (!rows.length) {
-            return { success: false, error: "Conversion non trouvée" };
+            return { success: false, error: "Conversion non trouvee" };
         }
 
         const row = rows[0];
-
-         // ✅ NORMALISATION
         const conversion = {
             id: row.ID_Convertion,
             dateConvertion: row.Date_Convertion,
@@ -50,75 +47,83 @@ export async function getConversionById(id: string) {
             entite: row.Entite,
         };
 
-        console.log("conversion", conversion);
-
         return { success: true, data: conversion };
     } catch (error) {
-        console.error("Erreur lors de la récupération de la conversion:", error);
-        return { success: false, error: "Impossible de récupérer la conversion" };
+        console.error("Erreur lors de la recuperation de la conversion:", error);
+        return { success: false, error: "Impossible de recuperer la conversion" };
     }
 }
 
 /**
- * Créer une nouvelle conversion
- * Seule la date est requise, l'entité 0 (DEFAULT ENTITY) et la session courante sont utilisés
+ * Creer une nouvelle conversion
+ * Seule la date est requise, l'entite 0 et la session courante sont utilises.
  */
 export async function createConversion(data: any) {
     try {
         const session = await getSession();
-        if (!session?.user) {
-            return { success: false, error: "Non authentifié" };
-        }
-        if (!data.Date_Convertion) {
-            return { success: false, error: "Date de conversion requise" };
-        }
-        // Créer la date de conversion sans les heures/minutes/secondes en heure locale
-        const dateConvertion = new Date(data.Date_Convertion);
-        dateConvertion.setHours(0, 0, 0, 0); // Mettre à 00:00:00.000 en heure locale
-        
-        // Vérifier si une conversion existe déjà pour cette date et entité
-        const existingConversion = await prisma.tConvertions.findFirst({
-            where: {
-                Date_Convertion: dateConvertion,
-                Entite: 0,
-            },
-        });
-
-        if (existingConversion) {
-            // Retourner la conversion existante au lieu de créer un doublon
-            return { 
-                success: true, 
-                data: existingConversion,
-                message: "Une conversion existe déjà pour cette date"
-            };
+        if (!session.user) {
+            return { success: false, error: "Non authentifie" };
         }
 
-        // Créer la conversion
-        const conversion = await prisma.tConvertions.create({
-            data: {
-                Date_Convertion: dateConvertion,
-                Entite: 0,
-                Session: Number(session.user.id),
-            },
-        });
-       
-        // taux devise locale
-        await prisma.tTauxChange.create({
-            data: {
-                Convertion: conversion.ID_Convertion,
-                Devise: 0,
-                Taux_Change: 1,
-                Session: Number(session.user.id),
-            },
-        });
+        // Compatibilite de payload:
+        // - ancien format: Date_Convertion
+        // - nouveau format: dateConvertion
+        const rawDateConvertion = data?.dateConvertion ?? data?.Date_Convertion;
+        if (!rawDateConvertion) {
+            return { success: false, error: "Date de conversion obligatoire" };
+        }
 
-       revalidatePath("/conversion");
-      return { success: true, data: conversion };
+        // Validation stricte de date:
+        // l'erreur initiale venait d'une date invalide qui partait en SQL.
+        const dateConvertion =
+            rawDateConvertion instanceof Date
+                ? new Date(rawDateConvertion)
+                : new Date(String(rawDateConvertion));
+
+        if (Number.isNaN(dateConvertion.getTime())) {
+            return { success: false, error: "Date de conversion invalide" };
+        }
+
+        // Conversion journaliere: on normalise a minuit.
+        dateConvertion.setHours(0, 0, 0, 0);
+
+        const sessionId = Number(session.user.id);
+        if (!Number.isInteger(sessionId)) {
+            return { success: false, error: "Session utilisateur invalide" };
+        }
+
+        const dateCreation = new Date();
+
+        // Creation + recuperation fiable de l'ID insere.
+        // OUTPUT ... INTO evite un SELECT TOP 1 fragile.
+        const newConversion = await prisma.$queryRaw<Array<{ ID: number }>>`
+            DECLARE @Inserted TABLE (ID INT);
+
+            INSERT INTO TConvertions ([Date Convertion], [Entite], [Session], [Date Creation])
+            OUTPUT INSERTED.[ID Convertion] INTO @Inserted (ID)
+            VALUES (${dateConvertion}, ${0}, ${sessionId}, ${dateCreation});
+
+            SELECT ID FROM @Inserted;
+        `;
+
+        const conversionId = newConversion[0]?.ID;
+        if (!conversionId) {
+            throw new Error("Echec de creation de la conversion");
+        }
+
+        // Ajouter automatiquement le taux 1.0 pour la devise locale (ID 0).
+        await prisma.$executeRaw`
+            INSERT INTO TTauxChange ([Convertion], [Devise], [Taux Change], [Session], [Date Creation])
+            VALUES (${conversionId}, ${0}, ${1.0}, ${sessionId}, ${dateCreation})
+        `;
+
+        revalidatePath("/conversion");
+        return { success: true, data: { id: conversionId } };
     } catch (error) {
-        console.error("Erreur création conversion:", error);
+        console.error("Erreur creation conversion:", error);
         return {
             success: false,
-            error: error instanceof Error ? error.message : "Erreur lors de la création conversion"
+            error: error instanceof Error ? error.message : "Erreur lors de la creation",
         };
     }
 }
@@ -128,8 +133,8 @@ export async function createConversion(data: any) {
  */
 export async function deleteConversion(id: string) {
     try {
-        const conversionId = parseInt(id);
-        if (isNaN(conversionId)) {
+        const conversionId = Number(id);
+        if (!Number.isInteger(conversionId)) {
             return { success: false, error: "ID invalide" };
         }
 
@@ -144,7 +149,7 @@ export async function deleteConversion(id: string) {
         console.error("Erreur suppression conversion:", error);
         return {
             success: false,
-            error: error instanceof Error ? error.message : "Erreur lors de la suppression"
+            error: error instanceof Error ? error.message : "Erreur lors de la suppression",
         };
     }
 }

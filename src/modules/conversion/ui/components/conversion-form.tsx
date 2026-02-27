@@ -44,7 +44,10 @@ export const ConversionForm = ({
 
     const onSubmit = async (data: any) => {
         try {
-            const result = await createConversion(data);
+            // Normalisation de payload: le serveur traite `dateConvertion`.
+            const result = await createConversion({
+                dateConvertion: data.Date_Convertion,
+            });
             if (result.success) {
                 onSuccess?.();
                 toast.success("Conversion créée avec succès");

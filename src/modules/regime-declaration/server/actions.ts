@@ -15,7 +15,7 @@ import {
 } from "@/lib/validation";
 
 /**
- * Crée un nouveau régime de déclaration
+ * Cree un nouveau regime de declaration
  */
 export async function createRegimeDeclaration(data: TRegimeDeclarationCreate) {
   try {
@@ -29,7 +29,49 @@ export async function createRegimeDeclaration(data: TRegimeDeclarationCreate) {
       throw new Error("Missing User Session");
     }
 
-    // Récupérer l'ID du régime créé
+    // Normaliser les donnees avant verification / insertion.
+    const regimeDouanierId = Number(validatedData.regimeDouanierId);
+    const tauxRegime = Number(validatedData.tauxRegime);
+    const libelle = String(validatedData.libelle ?? "").trim();
+    const sessionId = Number(session.user.id);
+
+    if (!Number.isInteger(sessionId)) {
+      throw new Error("Session utilisateur invalide");
+    }
+
+    // 1) Verifier le doublon sur la contrainte UNIQUE (Taux_Regime + Regime_Douanier).
+    const duplicateByTauxAndRegime = await prisma.tRegimesDeclarations.findFirst({
+      where: {
+        Taux_Regime: tauxRegime,
+        Regime_Douanier: regimeDouanierId,
+      },
+      select: {
+        ID_Regime_Declaration: true,
+        Libelle_Regime_Declaration: true,
+      },
+    });
+
+    if (duplicateByTauxAndRegime) {
+      return {
+        success: false,
+        error: `Ce taux (${tauxRegime}) existe deja pour ce regime douanier. Regime existant: "${duplicateByTauxAndRegime.Libelle_Regime_Declaration}" (ID ${duplicateByTauxAndRegime.ID_Regime_Declaration}).`,
+      };
+    }
+
+    // 2) Verifier le doublon sur le libelle (autre contrainte UNIQUE).
+    const duplicateByLibelle = await prisma.tRegimesDeclarations.findFirst({
+      where: { Libelle_Regime_Declaration: libelle },
+      select: { ID_Regime_Declaration: true },
+    });
+
+    if (duplicateByLibelle) {
+      return {
+        success: false,
+        error: `Le libelle "${libelle}" existe deja (ID ${duplicateByLibelle.ID_Regime_Declaration}).`,
+      };
+    }
+
+    // Inserer et recuperer l'ID cree.
     const inserted = await prisma.$queryRaw<
       { ID_Regime_Declaration: number }[]
     >`
@@ -45,42 +87,65 @@ export async function createRegimeDeclaration(data: TRegimeDeclarationCreate) {
       OUTPUT INSERTED.[ID Regime Declaration] AS ID_Regime_Declaration
       VALUES
       (
-        ${Number(validatedData.regimeDouanierId)},
-        ${validatedData.libelle},
-        ${validatedData.tauxRegime},
+        ${regimeDouanierId},
+        ${libelle},
+        ${tauxRegime},
         0,
-        ${Number(session.user.id)},
+        ${sessionId},
         SYSDATETIME()
       )
     `;
 
     revalidatePath("/regime-declaration");
 
-    return { 
+    return {
       success: true,
       data: {
-        id: inserted[0]?.ID_Regime_Declaration
-      }
+        id: inserted[0]?.ID_Regime_Declaration,
+      },
     };
   } catch (error) {
     console.error("createRegimeDeclaration", error);
-    return { success: false, error };
+
+    // Message metier lisible pour les contraintes SQL uniques.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2010"
+    ) {
+      const sqlMessage = String((error.meta as any)?.message ?? "");
+      if (sqlMessage.includes("UQ_TRegimesDeclarations$Taux Regime")) {
+        return {
+          success: false,
+          error: "Doublon refuse: ce couple taux/regime douanier existe deja.",
+        };
+      }
+      if (sqlMessage.includes("UQ_TRegimesDeclarations$Libelle Regime Declaration")) {
+        return {
+          success: false,
+          error: "Doublon refuse: ce libelle de regime existe deja.",
+        };
+      }
+    }
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erreur lors de la creation du regime de declaration",
+    };
   }
 }
 
-
 /**
- * Récupère un régime de déclaration par ID
+ * Recupere un regime de declaration par ID
  */
 export async function getRegimeDeclarationById(id: string) {
   try {
     const parsedId = Number(id);
 
-    // Exclure les IDs système
+    // Exclure les IDs systeme
     if ([0, 1].includes(parsedId)) {
       return {
         success: false,
-        error: "Régime de déclaration système non accessible",
+        error: "Regime de declaration systeme non accessible",
       };
     }
 
@@ -89,7 +154,7 @@ export async function getRegimeDeclarationById(id: string) {
     });
 
     if (!regimeDeclaration) {
-      return { success: false, error: "Régime de déclaration non trouvé" };
+      return { success: false, error: "Regime de declaration non trouvee" };
     }
 
     return {
@@ -115,7 +180,7 @@ export async function getRegimeDeclarationById(id: string) {
 
 
 /**
- * Récupère tous les régimes de déclaration avec filtres et pagination
+ * Recupere tous les regimes de declaration avec filtres et pagination
  */
 export async function getAllRegimeDeclarations(
   page = 1,
@@ -177,7 +242,7 @@ export async function getAllRegimeDeclarations(
 
 
 /**
- * Met à jour un régime de déclaration
+ * Met A jour un regime de declaration
  */
 export async function updateRegimeDeclaration(id: string, data: TRegimeDeclarationUpdate) {
   try {
@@ -201,7 +266,7 @@ export async function updateRegimeDeclaration(id: string, data: TRegimeDeclarati
       WHERE [ID Regime Declaration] = ${Number(id)}
     `;
 
-    // Récupérer les données mises à jour
+    // Recuperer les donnees mises A jour
     const updated = await prisma.vRegimesDeclarations.findFirst({
       where: { ID_Regime_Declaration: Number(id) },
     });
@@ -225,21 +290,21 @@ export async function updateRegimeDeclaration(id: string, data: TRegimeDeclarati
 
 
 /**
- * Supprime un régime de déclaration
+ * Supprime un regime de declaration
  */
 export async function deleteRegimeDeclaration(id: string) {
   try {
     const parsedId = Number(id);
 
-    // 🔒 Protection des régimes système
+    // Protection des regimes systeme
     if ([0, 1].includes(parsedId)) {
       return {
         success: false,
-        error: "Régime de déclaration système non supprimable",
+        error: "Regime de declaration systeme non supprimable",
       };
     }
 
-    // 🔍 Vérifier l'existence avant suppression
+    // Verifier l'existence avant suppression
     const existing = await prisma.vRegimesDeclarations.findFirst({
       where: { ID_Regime_Declaration: parsedId },
     });
@@ -247,20 +312,35 @@ export async function deleteRegimeDeclaration(id: string) {
     if (!existing) {
       return {
         success: false,
-        error: "Régime de déclaration introuvable",
+        error: "Regime de declaration introuvable",
       };
     }
 
-    // 🗑️ Suppression SQL (adaptée à ta base)
+    // Verifier les dependances FK avant DELETE.
+    // Si des lignes existent dans ces tables, SQL Server refusera la suppression.
+    const [linkedClientsCount, linkedColisagesCount] = await prisma.$transaction([
+      prisma.tRegimesClients.count({
+        where: { Regime_Declaration: parsedId },
+      }),
+      prisma.tColisageDossiers.count({
+        where: { Regime_Declaration: parsedId },
+      }),
+    ]);
+
+    if (linkedClientsCount > 0 || linkedColisagesCount > 0) {
+      return {
+        success: false,
+        error: `Suppression impossible: ce regime est encore utilise (${linkedClientsCount} association(s) client, ${linkedColisagesCount} colisage(s)).`,
+      };
+    }
+
     await prisma.$executeRaw`
       DELETE FROM dbo.TRegimesDeclarations
       WHERE [ID Regime Declaration] = ${parsedId}
     `;
 
-    // 🔄 Invalidation du cache
     revalidatePath("/regime-declaration");
 
-    // ✅ Retour cohérent avec EDWIN
     return {
       success: true,
       data: {
@@ -271,12 +351,18 @@ export async function deleteRegimeDeclaration(id: string) {
     };
   } catch (error) {
     console.error("deleteRegimeDeclaration error:", error);
-    return { success: false, error };
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Erreur lors de la suppression du regime de declaration",
+    };
   }
 }
 
 /**
- * Récupère tous les régimes de déclaration pour le sélecteur
+ * Recupere tous les regimes de declaration pour le selecteur
  */
 export async function getAllRegimeDeclarationsForSelect() {
   try {
@@ -287,7 +373,7 @@ export async function getAllRegimeDeclarationsForSelect() {
 
     const regimesDeclarations = await prisma.vRegimesDeclarations.findMany({
       where: {
-        ID_Regime_Declaration: { notIn: [0, 1] }, // Exclure les IDs système
+        ID_Regime_Declaration: { notIn: [0, 1] }, // Exclure les IDs systeme
       },
       orderBy: {
         Libelle_Regime_Declaration: "asc",

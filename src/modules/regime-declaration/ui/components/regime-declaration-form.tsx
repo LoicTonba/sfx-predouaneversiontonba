@@ -17,7 +17,6 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { createRegimeDeclaration, updateRegimeDeclaration } from "../../server/actions";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface RegimeDeclarationFormProps {
     onSuccess?: (id?: string) => void;
@@ -40,11 +39,7 @@ export const RegimeDeclarationForm = ({
         defaultValues: {
             libelle: initialValues?.libelle ?? "",
             // Convertir de décimal vers pourcentage pour l'affichage si c'est un ratio DC
-            tauxRegime: initialValues?.tauxRegime 
-                ? (Number(initialValues.tauxRegime) >= 0 && Number(initialValues.tauxRegime) <= 1 
-                    ? Number(initialValues.tauxRegime) * 100 
-                    : Number(initialValues.tauxRegime))
-                : 0,
+            tauxRegime: initialValues?.tauxRegime ?? 0,
             regimeDouanierId: "0", // Toujours régime 0 par défaut
         },
     });
@@ -57,20 +52,22 @@ export const RegimeDeclarationForm = ({
 
       // Auto-remplir le libellé quand le taux Regime change
     useEffect(() => {
-        if (tauxRegime !== undefined) {
+        if (tauxRegime !== undefined && tauxRegime !== null) {
             let autoLibelle = "";
-
-            if (tauxRegime === -2) {
+            const numValue = Number(tauxRegime);
+            if (numValue === -2) {
                 autoLibelle = "TTC";
-            } else if (tauxRegime === -1) {
+            } else if (numValue === -1) {
                 autoLibelle = "100% TR";
-            } else if (tauxRegime === 0) {
+            } else if (numValue === 0) {
                 autoLibelle = "Exonération";
-            } else if (tauxRegime === 100) {
+            } else if (numValue === 1) {
                 autoLibelle = "100% DC";
-            } else if (tauxRegime > 0 && tauxRegime < 100) {
-                const tauxTR = 100 - tauxRegime;
-                autoLibelle = `${tauxTR.toFixed(2)}% TR et ${tauxRegime.toFixed(2)}% DC`;
+            } else if (numValue > 0 && numValue < 1) {
+                // C'est un ratio décimal (ex: 0.5149 = 51.49% DC)
+                const tauxDC = numValue * 100;
+                const tauxTR = 100 - tauxDC;
+                autoLibelle = `${tauxTR.toFixed(2)}% TR et ${tauxDC.toFixed(2)}% DC`;
             }
 
             if (autoLibelle) {
@@ -80,7 +77,7 @@ export const RegimeDeclarationForm = ({
     }, [tauxRegime, form]);
 
     const onSubmit = async (data: TRegimeDeclarationCreate) => {
-        console.log('🚀 [RegimeDeclarationForm] onSubmit - data:', data);
+        console.log('[RegimeDeclarationForm] onSubmit - data:', data);
         
         // Préparer les données finales
         const finalData = { ...data };
@@ -88,13 +85,8 @@ export const RegimeDeclarationForm = ({
         // S'assurer que le régime douanier est toujours 0 (régime par défaut)
         finalData.regimeDouanierId = "0";
 
-        // Convertir le taux Regime selon le cas
-        if (finalData.tauxRegime === -2 || finalData.tauxRegime === -1) {
-            // TTC ou 100% TR - garder tel quel
-        } else if (finalData.tauxRegime >= 0 && finalData.tauxRegime <= 100) {
-            // Convertir de pourcentage (0-100) en décimal (0-1) pour la BD
-            finalData.tauxRegime = finalData.tauxRegime / 100;
-        }
+        // Le taux Regime est déjà au bon format (décimal)
+        // Pas de conversion nécessaire
 
         // S'assurer que le libellé est rempli
         if (!finalData.libelle || finalData.libelle.trim() === "") {
@@ -113,12 +105,12 @@ export const RegimeDeclarationForm = ({
             }
         }
 
-        console.log('📝 [RegimeDeclarationForm] finalData:', finalData);
-        console.log('🔄 [RegimeDeclarationForm] isEdit:', isEdit);
+        console.log('[RegimeDeclarationForm] finalData:', finalData);
+        console.log('[RegimeDeclarationForm] isEdit:', isEdit);
 
         if (isEdit && initialValues?.id) {
             try {
-                console.log('📝 [RegimeDeclarationForm] Updating regime...');
+                console.log('[RegimeDeclarationForm] Updating regime...');
                 const updatedRegime = await updateRegimeDeclaration(initialValues.id, finalData);
                 console.log('✅ [RegimeDeclarationForm] Update result:', updatedRegime);
                 if (updatedRegime.success) {
@@ -134,7 +126,7 @@ export const RegimeDeclarationForm = ({
             }
         } else {
             try {
-                console.log('📝 [RegimeDeclarationForm] Creating regime...');
+                console.log('[RegimeDeclarationForm] Creating regime...');
                 const regime = await createRegimeDeclaration(finalData);
                 console.log('✅ [RegimeDeclarationForm] Create result:', regime);
                 if (regime.success && regime.data?.id) {
@@ -162,20 +154,23 @@ export const RegimeDeclarationForm = ({
                             <FormLabel>Taux Régime*</FormLabel>
                             <FormControl>
                                 <Input
-                                    {...field}
+                                    value={field.value}
                                     type="number"
-                                    step="0.01"
-                                    min="0"
-                                    max="100"
-                                    placeholder="Taux de déclaration"
+                                    step="0.0001"
+                                    placeholder="Ex: -2, -1, 0, 0.5149, 1"
                                     onChange={(e) => {
-                                        let value = parseFloat(e.target.value) || 0;
-                                        // Limiter à 2 décimales
-                                        value = Math.round(value * 100) / 100;
-                                        // Limiter entre 0 et 100
-                                        value = Math.max(0, Math.min(100, value));
-                                        field.onChange(value);
+                                        const value = e.target.value;
+                                        if (value === '' || value === '-') {
+                                            field.onChange(0);
+                                            return;
+                                        }
+                                        const numValue = parseFloat(value);
+                                        if (!isNaN(numValue)) {
+                                            field.onChange(numValue);
+                                        }
                                     }}
+                                    onBlur={field.onBlur}
+                                    name={field.name}
                                 />
                             </FormControl>
                             <FormMessage />

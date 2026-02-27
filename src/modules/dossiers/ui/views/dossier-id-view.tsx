@@ -20,7 +20,7 @@ import { ColisageListForDossier } from "@/modules/colisages/ui/components/colisa
 import { ColisageHeaderForDossier } from "@/modules/colisages/ui/components/colisage-header-for-dossier";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NoteDetailView } from "../../../notes-details/ui/views/note-detail-view";
-import { ColisageImportDialog } from "@/modules/colisages/ui/components/colisage-template";
+import { ColisageImportDialog } from "@/modules/colisages/ui/components/colisage-import-for-dossier";
 
 
 interface Props {

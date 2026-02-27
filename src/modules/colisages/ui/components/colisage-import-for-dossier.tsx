@@ -7,21 +7,21 @@ import { toast } from "sonner";
 import {
     parseColisageExcelFile,
     checkExistingRowKeys,
-} from "../../server/import-colisage-actions";
-import { ColisageImportPreviewDialog } from "./colisage-import-preview-dialog";
+} from "../../server/colisage-actions";
+import { ColisageImportParseDialog } from "./colisage-import-parse-dialog";
 import { MissingValuesDialog } from "./missing-values-dialog";
 import { MissingDevisesDialog } from "./missing-devises-dialog";
 import { MissingPaysDialog } from "./missing-pays-dialog";
 import { MissingHSCodesDialog } from "./missing-hscodes-dialog";
 import { MissingRegimeDeclarationsDialog } from "./missing-regime-declarations-dialog";
 import { RegimeAssociationDialog } from "./regime-association-dialog";
-import { associateRegimesToClient, getClientName } from "../../server/associate-regimes-actions";
+import { associateRegimesToClient, getClientName } from "@/modules/dossiers/server/associate-regimes-actions";
 
 interface ColisageImportForDossierProps {
-    dossierId: number;
+    dossierId: string | number;
 }
 
-export const ColisageImportForDossier = ({ dossierId }: ColisageImportForDossierProps) => {
+export const ColisageImportDialog = ({ dossierId }: ColisageImportForDossierProps) => {
     const [isLoading, setIsLoading] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
     const [showMissingValues, setShowMissingValues] = useState(false);
@@ -182,15 +182,15 @@ export const ColisageImportForDossier = ({ dossierId }: ColisageImportForDossier
             formData.append("file", file);
 
             // Parse le fichier avec le dossierId pour récupérer le client
-            const parseResult = await parseColisageExcelFile(formData, dossierId);
+            const parseResult = await parseColisageExcelFile(formData, Number(dossierId));
             if (!parseResult.success || !parseResult.data) {
                 toast.error(parseResult.error || "Erreur lors du parsing");
                 return;
             }
 
             // Vérifier les rowKeys existants
-            const rowKeys = parseResult.data.rows.map((r: any) => r.rowKey).filter(Boolean);
-            const existingResult = await checkExistingRowKeys(dossierId, rowKeys);
+            const rowKeys = parseResult.data.rows.map((r: any) => r.uploadKey).filter(Boolean);
+            const existingResult = await checkExistingRowKeys(Number(dossierId), rowKeys);
 
             setParsedRows(parseResult.data.rows);
             setExistingRowKeys(existingResult.success ? existingResult.data || [] : []);
@@ -391,7 +391,7 @@ export const ColisageImportForDossier = ({ dossierId }: ColisageImportForDossier
                     if (currentFile) {
                         const formData = new FormData();
                         formData.append("file", currentFile);
-                        const reparseResult = await parseColisageExcelFile(formData, dossierId);
+                        const reparseResult = await parseColisageExcelFile(formData, Number(dossierId));
                         
                         if (reparseResult.success && reparseResult.data) {
                             // Mettre à jour avec les nouvelles données validées
@@ -407,7 +407,7 @@ export const ColisageImportForDossier = ({ dossierId }: ColisageImportForDossier
                     if (currentFile) {
                         const formData = new FormData();
                         formData.append("file", currentFile);
-                        const reparseResult = await parseColisageExcelFile(formData, dossierId);
+                        const reparseResult = await parseColisageExcelFile(formData, Number(dossierId));
                         
                         if (reparseResult.success && reparseResult.data) {
                             // Mettre à jour avec les nouvelles données validées
@@ -464,7 +464,7 @@ export const ColisageImportForDossier = ({ dossierId }: ColisageImportForDossier
                                 console.log('🔄 [RegimeAssociation] Re-parsing après association...');
                                 const formData = new FormData();
                                 formData.append("file", currentFile);
-                                const reparseResult = await parseColisageExcelFile(formData, dossierId);
+                                const reparseResult = await parseColisageExcelFile(formData, Number(dossierId));
                                 
                                 console.log('📊 [RegimeAssociation] Résultat re-parsing:', reparseResult);
                                 
@@ -527,7 +527,7 @@ export const ColisageImportForDossier = ({ dossierId }: ColisageImportForDossier
                         
                         const formData = new FormData();
                         formData.append("file", currentFile);
-                        const reparseResult = await parseColisageExcelFile(formData, dossierId);
+                        const reparseResult = await parseColisageExcelFile(formData, Number(dossierId));
                         
                         if (reparseResult.success && reparseResult.data) {
                             const updatedMissingValues = {
@@ -562,7 +562,7 @@ export const ColisageImportForDossier = ({ dossierId }: ColisageImportForDossier
                         
                         const formData = new FormData();
                         formData.append("file", currentFile);
-                        const reparseResult = await parseColisageExcelFile(formData, dossierId);
+                        const reparseResult = await parseColisageExcelFile(formData, Number(dossierId));
                         
                         if (reparseResult.success && reparseResult.data) {
                             const updatedMissingValues = {
@@ -597,7 +597,7 @@ export const ColisageImportForDossier = ({ dossierId }: ColisageImportForDossier
                         
                         const formData = new FormData();
                         formData.append("file", currentFile);
-                        const reparseResult = await parseColisageExcelFile(formData, dossierId);
+                        const reparseResult = await parseColisageExcelFile(formData, Number(dossierId));
                         
                         if (reparseResult.success && reparseResult.data) {
                             const updatedMissingValues = {
@@ -632,13 +632,14 @@ export const ColisageImportForDossier = ({ dossierId }: ColisageImportForDossier
                 onCancel={cancelAllProcess}
             />
 
-            <ColisageImportPreviewDialog
+            <ColisageImportParseDialog
                 open={showPreview}
                 onOpenChange={setShowPreview}
-                dossierId={dossierId}
+                dossierId={Number(dossierId)}
                 parsedRows={parsedRows}
                 existingRowKeys={existingRowKeys}
             />
         </>
     );
 };
+

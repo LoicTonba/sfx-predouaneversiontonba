@@ -7,7 +7,7 @@ import { Edit2 } from "lucide-react";
 
 interface ParsedRow {
     _rowIndex: number;
-    rowKey: string;
+    uploadKey: string;
     hscode?: string;
     description: string;
     numeroCommande?: string;
@@ -59,7 +59,7 @@ export const EditableColisageCard = ({
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <span className="font-mono text-xs text-muted-foreground">
-                            {row.rowKey}
+                            {row.uploadKey}
                         </span>
                         {isExisting && (
                             <Badge variant="outline" className="text-xs border-orange-500 text-orange-600">

@@ -103,11 +103,18 @@ export async function checkConversionExists(dateDeclaration: Date, entiteId: num
  * ============================================================================
  */
 export async function genererNotesDetail(dossierId: number, dateDeclaration: Date) { 
+    console.log(
+    "[genererNotesDetail] DEBUT - Dossier:",
+    dossierId,
+    "Date:",
+    dateDeclaration,
+  );
     
     try {
         /* --------------------------------------------------------------------
          * 1️⃣ SÉCURITÉ : SESSION
          * ------------------------------------------------------------------ */
+        console.log("[genererNotesDetail] Étape 1: Vérification session");
         const session = await getSession();
         if (!session.user) {
             return { success: false, error: "Non authentifié" };
@@ -116,6 +123,7 @@ export async function genererNotesDetail(dossierId: number, dateDeclaration: Dat
         /* --------------------------------------------------------------------
          * 2️⃣ RÉCUPÉRATION DU DOSSIER
          * ------------------------------------------------------------------ */
+        console.log("[genererNotesDetail] Étape 2: Récupération dossier");
         const dossier = await prisma.tDossiers.findUnique({
             where: { ID_Dossier: dossierId },
             select: {
@@ -125,10 +133,21 @@ export async function genererNotesDetail(dossierId: number, dateDeclaration: Dat
         });
 
         if (!dossier) {
+            console.log("❌ [genererNotesDetail] Dossier non trouvé");
             return { success: false, error: "Dossier non trouvé" };
         }
+        console.log(
+        "✅ [genererNotesDetail] Dossier trouvé - Statut:",
+        dossier.Statut_Dossier,
+        "Branche:",
+        dossier.Branche,
+        );
 
         if (dossier.Statut_Dossier !== 0) {
+        console.log(
+            "❌ [genererNotesDetail] Statut invalide:",
+            dossier.Statut_Dossier,
+        );
             return {
                 success: false,
                 error: "Le dossier doit être en cours (statut = 0) pour générer les notes de détail",
@@ -138,11 +157,14 @@ export async function genererNotesDetail(dossierId: number, dateDeclaration: Dat
          /* --------------------------------------------------------------------
          * 3️⃣ VÉRIFICATION DES COLISAGES
          * ------------------------------------------------------------------ */
+        console.log("[genererNotesDetail] Étape 3: Vérification colisages");
         const colisagesCount = await prisma.tColisageDossiers.count({
             where: { Dossier: dossierId },
         });
+        console.log("✅ [genererNotesDetail] Colisages trouvés:", colisagesCount);
 
         if (colisagesCount === 0) {
+            console.log("❌ [genererNotesDetail] Aucun colisage");
             return { 
                 success: false, 
                 error: "Aucun colisage trouvé pour ce dossier" 
@@ -152,6 +174,9 @@ export async function genererNotesDetail(dossierId: number, dateDeclaration: Dat
         /* --------------------------------------------------------------------
          * 4️⃣ VÉRIFICATION HS CODE + RÉGIME
          * ------------------------------------------------------------------ */
+        console.log(
+        "📝 [genererNotesDetail] Étape 4: Vérification HS Code et régimes",
+        );
         const colisagesSansRegime = await prisma.tColisageDossiers.count({
             where: {
                 Dossier: dossierId,
@@ -160,29 +185,50 @@ export async function genererNotesDetail(dossierId: number, dateDeclaration: Dat
         });
 
         if (colisagesSansRegime > 0) {
+        console.log(
+            "❌ [genererNotesDetail] Colisages sans régime:",
+            colisagesSansRegime,
+        );
             return {
                 success: false,
                 error: `${colisagesSansRegime} colisage(s) n'ont pas de HS Code ou de régime de déclaration`,
             };
         }
+        console.log(
+        "✅ [genererNotesDetail] Tous les colisages ont HS Code et régime",
+        );
         
         /* --------------------------------------------------------------------
          * 5️⃣ RÉCUPÉRATION DE L’ENTITÉ VIA LA BRANCHE
          * ------------------------------------------------------------------ */
+        console.log(
+        "[genererNotesDetail] Étape 5: Récupération branche et entité",
+        );
         const branche = await prisma.tBranches.findUnique({
             where: { ID_Branche: dossier.Branche },
             select: { Entite: true },
         });
 
         if (!branche) {
+            console.log("❌ [genererNotesDetail] Branche non trouvée");
             return { success: false, error: "Branche non trouvée" };
         }
+         console.log(
+        "✅ [genererNotesDetail] Branche trouvée - Entité:",
+        branche.Entite,
+        );
+
+        console.log(
+        "[genererNotesDetail] Étape 6: Recherche conversion pour date:",
+        dateDeclaration,
+        );
         
         /* --------------------------------------------------------------------
          * 6️⃣ RÉCUPÉRATION DE LA CONVERSION (DATE EXACTE BD)
         * ------------------------------------------------------------------ */
         const dateStr = dateDeclaration.toISOString().split('T')[0];
-        
+        console.log("Date formatée:", dateStr);
+
         const conversions = await prisma.$queryRaw<
                 { ID_Convertion: number; Date_Convertion: Date }[]
             >`
@@ -192,13 +238,24 @@ export async function genererNotesDetail(dossierId: number, dateDeclaration: Dat
                 WHERE CAST([Date Convertion] AS DATE) = CAST(${dateStr} AS DATE)
                 AND [Entite] = ${branche.Entite}
             `;
+             console.log(
+        "✅ [genererNotesDetail] Conversions trouvées:",
+        conversions.length,
+        );
 
         if (conversions.length === 0) {
+            console.log("❌ [genererNotesDetail] Aucune conversion pour cette date");
             return {
                 success: false,
                 error: "Aucune conversion trouvée pour cette date et cette entité",
             };
         }
+         console.log(
+      "Conversion ID:",
+      conversions[0].ID_Convertion,
+      "Date:",
+      conversions[0].Date_Convertion,
+    );
 
         const conversionId = conversions[0].ID_Convertion;
         const dateConversionExacte = conversions[0].Date_Convertion;
@@ -206,6 +263,9 @@ export async function genererNotesDetail(dossierId: number, dateDeclaration: Dat
          /* --------------------------------------------------------------------
          * 7️⃣ VÉRIFICATION DES TAUX DE CHANGE
          * ------------------------------------------------------------------ */
+         console.log(
+        "📝 [genererNotesDetail] Étape 6b: Vérification des taux de change",
+        );
         const devisesUtilisees = await prisma.$queryRaw<
             { ID_Devise: number; Code_Devise: string; Libelle_Devise: string }[]
         >`
@@ -217,6 +277,10 @@ export async function genererNotesDetail(dossierId: number, dateDeclaration: Dat
             INNER JOIN TDevises d ON cd.[Devise] = d.[ID Devise]
             WHERE cd.[Dossier] = ${dossierId}
         `;
+         console.log(
+      "   Devises utilisées:",
+      devisesUtilisees.map((d) => d.Code_Devise).join(", "),
+    );
         // Vérifier les taux de change pour chaque devise
         const tauxManquants: any[] = [];
         for (const devise of devisesUtilisees) {
@@ -228,6 +292,11 @@ export async function genererNotesDetail(dossierId: number, dateDeclaration: Dat
             `;
             
             if (taux.length === 0) {  
+                 console.log(`   Taux manquant pour devise:`, {
+          ID_Devise: devise.ID_Devise,
+          Code_Devise: devise.Code_Devise,
+          Libelle_Devise: devise.Libelle_Devise,
+        });
                 tauxManquants.push({
                     deviseId: devise.ID_Devise,
                     Code_Devise: devise.Code_Devise,
@@ -237,6 +306,10 @@ export async function genererNotesDetail(dossierId: number, dateDeclaration: Dat
         }
 
         if (tauxManquants.length > 0) {
+            console.log(
+        "❌ [genererNotesDetail] Taux manquants:",
+        tauxManquants.map((t) => t.codeDevise).join(", "),
+      );
             return {
                 success: false,
                 error: "MISSING_EXCHANGE_RATES",
@@ -246,15 +319,19 @@ export async function genererNotesDetail(dossierId: number, dateDeclaration: Dat
             };
         }
 
+        console.log("✅ [genererNotesDetail] Tous les taux de change existent");
+
          /* --------------------------------------------------------------------
          * 8️⃣ APPEL PROCÉDURE STOCKÉE (PRISMA-SAFE)
          * ------------------------------------------------------------------ */
+        
         await prisma.$executeRaw`
             EXEC dbo.pSP_CreerNoteDetail
                 @Id_Dossier      = ${dossierId},
                 @DateDeclaration = ${dateConversionExacte}
         `;
         
+        console.log("✅ [genererNotesDetail] FIN - SUCCESS");
         /* --------------------------------------------------------------------
          * 9️⃣ INVALIDATION DU CACHE
          * ------------------------------------------------------------------ */
@@ -447,8 +524,9 @@ export async function getNotesDetail(dossierId: number) {
         // Mappe les noms de colonnes pour correspondre à ce que le composant attend
         const mappedNotes = serializedNotes.map((n: any) => ({
             ...n,
-            Qte_Colis: n.Base_Qte,                               // Quantité de base
-            Prix_Unitaire_Colis: n.Base_PU || n.Base_Prix_Unitaire_Colis, // Prix unitaire base
+            Nbre_Paquetage: n.Nbre_Paquetage,                               // Nombre de paquetage
+            Prix_Unitaire_Colis: n.Valeur / (n.Nbre_Paquetage || 1), // Prix unitaire base
+            Valeur : n.Valeur,                                      // Valeur
             Poids_Brut: n.Base_Poids_Brut,                        // Poids brut base
             Poids_Net: n.Base_Poids_Net,                          // Poids net base
             Volume: n.Base_Volume,                               // Volume base
@@ -463,6 +541,52 @@ export async function getNotesDetail(dossierId: number) {
         return {
             success: false,
             error: error instanceof Error ? error.message : "Erreur lors de la récupération",
+        };
+    }
+}
+
+/**
+ * Récupérer les taux de change pour un dossier
+ * Utilise la fonction fx_TauxChangeDossier
+ */
+export async function getTauxChangeDossier(dossierId: number) {
+    try {
+        // Récupérer la date de conversion via raw SQL pour éviter les problèmes de relation Prisma
+        const dossierData = await prisma.$queryRaw<any[]>`
+            SELECT d.[Convertion], c.[Date Convertion] as DateConvertion
+            FROM TDossiers d
+            LEFT JOIN TConvertions c ON d.[Convertion] = c.[ID Convertion]
+            WHERE d.[ID Dossier] = ${dossierId}
+        `;
+
+        if (!dossierData || dossierData.length === 0 || !dossierData[0].DateConvertion) {
+            return { success: false, error: "Dossier ou conversion non trouvé" };
+        }
+
+        const dateDeclaration = dossierData[0].DateConvertion;
+
+        console.log(`[getTauxChangeDossier] Dossier ${dossierId}, Date: ${dateDeclaration}`);
+
+        // Appeler la fonction fx_TauxChangeDossier
+        const tauxChange = await prisma.$queryRaw<any[]>`
+            SELECT 
+                [ID_Devise],
+                [Code_Devise],
+                [Taux_Change],
+                [ID_Convertion]
+            FROM [dbo].[fx_TauxChangeDossier](${dossierId}, ${dateDeclaration})
+        `;
+
+        const serializedTaux = JSON.parse(JSON.stringify(tauxChange));
+
+        console.log(`[getTauxChangeDossier] ${serializedTaux.length} taux récupérés:`, serializedTaux);
+
+        return { success: true, data: serializedTaux };
+    } catch (error) {
+        console.error("getTauxChangeDossier error:", error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Erreur lors de la récupération des taux",
         };
     }
 }

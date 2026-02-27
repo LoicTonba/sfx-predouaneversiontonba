@@ -3,116 +3,126 @@
 // ============================================================================
 // MODULE ACTIONS.TS - DOSSIERS DOUANIERS
 // ============================================================================
-// Rôle global : Fichier principal contenant toutes les actions serveur pour la
-// gestion des dossiers de douane. Gère les opérations CRUD, la pagination,
-// les filtres et la récupération des données de référence.
+// RÃ´le global : Fichier principal contenant toutes les actions serveur pour la
+// gestion des dossiers de douane. GÃ¨re les opÃ©rations CRUD, la pagination,
+// les filtres et la rÃ©cupÃ©ration des donnÃ©es de rÃ©fÃ©rence.
 //
 // Architecture :
 // - Utilise VDossiers (vue) pour les lectures avec jointures
-// - Utilise TDossiers (table) pour les écritures
-// - Inclut l'authentification utilisateur pour sécuriser les actions
-// - Invalide le cache Next.js après modifications
+// - Utilise TDossiers (table) pour les Ã©critures
+// - Inclut l'authentification utilisateur pour sÃ©curiser les actions
+// - Invalide le cache Next.js aprÃ¨s modifications
 // ============================================================================
 
-// Import des bibliothèques nécessaires
-import  auth  from "@/lib/auth";          // Système d'authentification pour sécuriser les actions
-import prisma from "@/lib/prisma";          // Client Prisma pour les interactions avec la base de données
-import { revalidatePath } from "next/cache"; // Fonction Next.js pour invalider le cache après modifications
-import { headers } from "next/headers";     // Fonction Next.js pour récupérer les en-têtes HTTP (sessions)
+// Import des bibliothÃ¨ques nÃ©cessaires
+import  auth  from "@/lib/auth";          // SystÃ¨me d'authentification pour sÃ©curiser les actions
+import prisma from "@/lib/prisma";          // Client Prisma pour les interactions avec la base de donnÃ©es
+import { revalidatePath } from "next/cache"; // Fonction Next.js pour invalider le cache aprÃ¨s modifications
+import { headers } from "next/headers";     // Fonction Next.js pour rÃ©cupÃ©rer les en-tÃªtes HTTP (sessions)
+
+/**
+ * Convert Prisma Decimal objects into standard JavaScript numbers.
+ * This keeps the payload safe for frontend rendering.
+ */
+function convertDecimalsToNumbers<T>(data: T): T {
+    const jsonString = JSON.stringify(data, (_, value) => {
+        if (value && typeof value === "object" && value.constructor?.name === "Decimal") {
+            return Number(value.toString());
+        }
+        return value;
+    });
+
+    return JSON.parse(jsonString) as T;
+}
+
 
 /**
  * ============================================================================
  * FONCTION : getAllDossiers
  * ============================================================================
- * Rôle global : Récupère TOUS les dossiers avec leurs informations complètes
+ * Role global : Recuperer TOUS les dossiers avec leurs informations completes
  * via la vue VDossiers. Supporte la pagination, la recherche et les filtres.
  * 
- * Paramètres :
- * @param page - Page actuelle pour la pagination (défaut: 1)
- * @param take - Nombre de résultats par page (défaut: 10000)
+ * Parametres :
+ * @param page - Page actuelle pour la pagination (defaut: 1)
+ * @param take - Nombre de rÃ©sultats par page (defaut: 10000)
  * @param search - Terme de recherche pour filtrer les dossiers
  * @param statutId - Filtre par ID de statut de dossier
- * @param etapeId - Filtre par ID d'étape actuelle
+ * @param etapeId - Filtre par ID d'etape actuelle
  * 
  * Retour : Objet { success: boolean, data: array, total: number, error?: string }
  * ============================================================================
  */
 export async function getAllDossiers(
-    page = 1,           // Page actuelle pour la pagination (défaut: 1)
-    take = 10000,       // Nombre de résultats par page (défaut: 10000)
-    search = "",        // Terme de recherche pour filtrer les dossiers
-    statutId: number | null = null,  // Filtre par ID de statut de dossier
-    etapeId: number | null = null    // Filtre par ID d'étape actuelle
+    page = 1,
+    take = 10000,
+    search = "",
+    statutId: number | null = null,
+    etapeId: number | null = null
 ) {
     try {
-        // --------------------------------------------------------------------
-        // 1️⃣ VÉRIFICATION DE L'AUTHENTIFICATION UTILISATEUR
-        // --------------------------------------------------------------------
-        // Récupère la session utilisateur depuis les en-têtes HTTP pour sécurité
+        // 1) Verify authenticated user session
         const session = await auth.api.getSession({
-            headers: await headers(),  // Récupère les en-têtes HTTP pour la session
+            headers: await headers(),
         });
 
-        // Si pas de session, l'utilisateur n'est pas authentifié → erreur
         if (!session) {
             throw new Error("Missing User Session");
         }
 
-        // --------------------------------------------------------------------
-        // 2️⃣ CONSTRUCTION DES CONDITIONS DE FILTRE POUR LA REQUÊTE
-        // --------------------------------------------------------------------
-        // Construit dynamiquement les conditions WHERE pour la requête Prisma
+        // 2) Build dynamic filters
         const where: any = {};
 
-        // Si un terme de recherche est fourni, crée une condition OR pour chercher
-        // dans plusieurs champs (numéro dossier, numéro OT, nom client, type dossier)
         if (search) {
             where.OR = [
-                { No_Dossier: { contains: search } },      // Recherche dans le numéro de dossier
-                { No_OT: { contains: search } },           // Recherche dans le numéro d'OT
-                { Nom_Client: { contains: search } },       // Recherche dans le nom du client
-                { Libelle_Type_Dossier: { contains: search } }, // Recherche dans le type de dossier
+                { No_Dossier: { contains: search } },
+                { No_OT: { contains: search } },
+                { Nom_Client: { contains: search } },
+                { Libelle_Type_Dossier: { contains: search } },
             ];
         }
 
-        // Ajoute le filtre sur le statut si fourni (filtrage exact)
         if (statutId !== null) {
             where.ID_Statut_Dossier = statutId;
         }
 
-        // Ajoute le filtre sur l'étape si fournie (filtrage exact)
         if (etapeId !== null) {
             where.ID_Etape_Actuelle = etapeId;
         }
 
-        // --------------------------------------------------------------------
-        // 3️⃣ REQUÊTE PRISMA POUR RÉCUPÉRER LES DOSSIERS
-        // --------------------------------------------------------------------
-        // Interroge la vue VDossiers qui contient déjà toutes les jointures nécessaires
+        // 3) Read from VDossiers view
         const dossiers = await prisma.vDossiers.findMany({
-            where,                                   // Applique les filtres construits ci-dessus
-            orderBy: { ID_Dossier: "desc" },        // Trie par ID décroissant (plus récent d'abord)
-            take,                                    // Limite le nombre de résultats pour pagination
-            skip: (page - 1) * take,                // Calcule l'offset pour la pagination (page-1 * pageSize)
+            where,
+            orderBy: { ID_Dossier: "desc" },
+            take,
+            skip: (page - 1) * take,
         });
 
-        // --------------------------------------------------------------------
-        // 4️⃣ SÉRIALISATION DES DONNÉES POUR JSON
-        // --------------------------------------------------------------------
-        // Convertit les objets Decimal en nombres pour la sérialisation JSON
-        // Prisma retourne des Decimal qui ne peuvent pas être sérialisés directement
-        // JSON.parse(JSON.stringify()) est la méthode la plus fiable pour cette conversion
-        const serializedDossiers = JSON.parse(JSON.stringify(dossiers));
+        // 4) Defensive deduplication by ID_Dossier
+        // The SQL view can return duplicated rows for one dossier.
+        const uniqueDossiers = Array.from(
+            new Map(dossiers.map((d) => [d.ID_Dossier, d])).values()
+        );
 
-        // --------------------------------------------------------------------
-        // 5️⃣ RETOUR DU RÉSULTAT
-        // --------------------------------------------------------------------
-        // Retourne le succès avec les données sérialisées et le total
+        // 5) Convert Decimal values and normalize nullable numeric fields
+        const serializedDossiers = uniqueDossiers.map((dossier) => {
+            const serialized = convertDecimalsToNumbers(dossier);
+
+            return {
+                ...serialized,
+                Nbre_Paquetage_Pesee: serialized.Nbre_Paquetage_Pesee ?? 0,
+                Poids_Brut_Pesee: serialized.Poids_Brut_Pesee ?? 0,
+                Poids_Net_Pesee: serialized.Poids_Net_Pesee ?? 0,
+                Volume_Pesee: serialized.Volume_Pesee ?? 0,
+            };
+        });
+
+        // 6) Return stable payload for frontend
         return { success: true, data: serializedDossiers, total: serializedDossiers.length };
     } catch (error) {
-        // En cas d'erreur, log l'erreur dans la console pour débogage
+        // En cas d'erreur, log l'erreur dans la console pour debogage
         console.error("getAllDossiers error:", error);
-        // Retourne l'échec avec l'erreur pour affichage utilisateur
+        // Retourne l'echec avec l'erreur pour affichage utilisateur
         return {
             success: false,
             error: error instanceof Error ? error.message : "Erreur inconnue"
@@ -125,17 +135,17 @@ export async function getAllDossiers(
  * ============================================================================
  * FONCTION : getDossierById
  * ============================================================================
- * Rôle global : Récupère un dossier spécifique par son ID via la vue VDossiers.
+ * Role global : Recupere un dossier specifique par son ID via la vue VDossiers.
  * 
- * Paramètres :
- * @param id - ID du dossier à récupérer
+ * Parametres :
+ * @param id - ID du dossier a recuperer
  * 
  * Retour : Objet { success: boolean, data: object, error?: string }
  * ============================================================================
  */
 export async function getDossierById(id: string) {
     try {
-        // Recherche le premier dossier correspondant à l'ID fourni
+        // Recherche le premier dossier correspondant a l'ID fourni
         const dossier = await prisma.vDossiers.findFirst({
             where: { ID_Dossier: parseInt(id) },  // Convertit l'ID string en nombre
         });
@@ -143,21 +153,26 @@ export async function getDossierById(id: string) {
         console.log("dossier", dossier);    
 
     
-        // Si aucun dossier trouvé, retourne une erreur
+        // Si aucun dossier trouve, retourne une erreur
         if (!dossier) {
-            return { success: false, error: "Dossier non trouvé" };
+            return { success: false, error: "Dossier non trouve" };
         }
 
-        // Sérialise TOUS les objets Decimal en nombres via JSON
-        // Évite les erreurs de sérialisation côté client
-        const serializedDossier = JSON.parse(JSON.stringify(dossier));
+        // Serialise TOUS les objets Decimal en nombres via JSON
+        // evite les erreurs de serialisation cote client
+        const serializedDossier = convertDecimalsToNumbers(dossier);
 
-        // Retourne le succès avec les données du dossier sérialisées
+        serializedDossier.Nbre_Paquetage_Pesee = serializedDossier.Nbre_Paquetage_Pesee ?? 0;
+        serializedDossier.Poids_Brut_Pesee = serializedDossier.Poids_Brut_Pesee ?? 0;
+        serializedDossier.Poids_Net_Pesee = serializedDossier.Poids_Net_Pesee ?? 0;
+        serializedDossier.Volume_Pesee = serializedDossier.Volume_Pesee ?? 0;
+
+        // Retourne le succes avec les donnees du dossier serialisees
         return { success: true, data: serializedDossier };
     } catch (error) {
-        // Log l'erreur en cas d'échec
+        // Log l'erreur en cas d'echec
         console.error("getDossierById error:", error);
-        // Retourne l'échec avec l'erreur
+        // Retourne l'echec avec l'erreur
         return {
             success: false,
             error: error instanceof Error ? error.message : "Erreur inconnue",
@@ -170,64 +185,64 @@ export async function getDossierById(id: string) {
  * ============================================================================
  * FONCTION : getDossiersByClientId
  * ============================================================================
- * Rôle global : Récupère tous les dossiers associés à un client spécifique.
- * Utilisé pour afficher l'historique des dossiers d'un client dans sa fiche.
+ * Role global : Recupere tous les dossiers associes a un client specifique.
+ * Utilise pour afficher l'historique des dossiers d'un client dans sa fiche.
  * 
- * Paramètres :
- * @param clientId - ID du client pour lequel récupérer les dossiers
+ * Parametres :
+ * @param clientId - ID du client pour lequel recuperer les dossiers
  * 
  * Retour : Objet { success: boolean, data: array, error?: string }
  * ============================================================================
  */
 export async function getDossiersByClientId(clientId: string) {
     try {
-        // Log de débogage pour suivre l'exécution de la fonction
-        console.log('🔍 [getDossiersByClientId] Recherche dossiers pour client ID:', clientId);
+        // Log de debogage pour suivre l'execution de la fonction
+        console.log('[getDossiersByClientId] Recherche dossiers pour client ID:', clientId);
         
         // --------------------------------------------------------------------
-        // 1️⃣ VÉRIFICATION DE L'AUTHENTIFICATION
+        // 1. VERIFICATION DE L'AUTHENTIFICATION
         // --------------------------------------------------------------------
         const session = await auth.api.getSession({
             headers: await headers(),
         });
 
-        // Si pas de session, l'utilisateur n'est pas authentifié
+        // Si pas de session, l'utilisateur n'est pas authentifie
         if (!session) {
             throw new Error("Missing User Session");
         }
 
         // --------------------------------------------------------------------
-        // 2️⃣ CONVERSION ET PRÉPARATION
+        // 2. CONVERSION ET PREPARATION
         // --------------------------------------------------------------------
-        // Convertit l'ID du client de string en nombre pour la requête
+        // Convertit l'ID du client de string en nombre pour la requete
         const clientIdInt = parseInt(clientId);
-        console.log('📝 [getDossiersByClientId] Client ID converti:', clientIdInt);
+        console.log('[getDossiersByClientId] Client ID converti:', clientIdInt);
 
         // Recherche tous les dossiers du client via la vue VDossiers
         const dossiers = await prisma.vDossiers.findMany({
             where: { ID_Client: clientIdInt as number },  // Filtre par ID client
-            orderBy: { Date_Creation: "desc" }, // Trie par date de création décroissante
+            orderBy: { Date_Creation: "desc" }, // Trie par date de creation decroissante
             select: {
                 ID_Dossier: true,                    // ID du dossier
-                No_Dossier: true,                    // Numéro du dossier
-                No_OT: true,                         // Numéro d'OT
+                No_Dossier: true,                    // Numero du dossier
+                No_OT: true,                         // Numero d'OT
                 ID_Client: true,                     // ID du client
                 Nom_Client: true,                    // Nom du client
                 Libelle_Type_Dossier: true,           // Type de dossier
                 Libelle_Statut_Dossier: true,         // Statut du dossier
                 ID_Statut_Dossier: true,              // ID du statut
-                ID_Etape_Actuelle: true,              // ID de l'étape actuelle
-                Libelle_Etape_Actuelle: true,         // Libellé de l'étape actuelle
-                Date_Creation: true,                  // Date de création
+                ID_Etape_Actuelle: true,              // ID de l'etape actuelle
+                Libelle_Etape_Actuelle: true,         // Libelle de l'etape actuelle
+                Date_Creation: true,                  // Date de creation
                 Date_Ouverture_Dossier: true,         // Date d'ouverture du dossier
             },
         });
 
-        // Logs de débogage pour vérifier les résultats
-        console.log('📊 [getDossiersByClientId] Dossiers trouvés:', dossiers.length);
-        console.log('📋 [getDossiersByClientId] Premier dossier:', dossiers[0]);
+        // Logs de debogage pour verifier les resultats
+        console.log('[getDossiersByClientId] Dossiers trouves:', dossiers.length);
+        console.log('[getDossiersByClientId] Premier dossier:', dossiers[0]);
 
-        // Sérialise les données pour éviter les erreurs Decimal et mapper les noms
+        // Serialise les donnees pour eviter les erreurs Decimal et mapper les noms
         // Convertit les objets Decimal en nombres via JSON.parse(JSON.stringify())
         const serializedDossiers = dossiers.map(d => ({
             ID_Dossier: d.ID_Dossier,
@@ -237,24 +252,24 @@ export async function getDossiersByClientId(clientId: string) {
             Nom_Client: d.Nom_Client,
             Libelle_Type_Dossier: d.Libelle_Type_Dossier,
             Libelle_Statut_Dossier: d.Libelle_Statut_Dossier,
-            "Statut Dossier": d.ID_Statut_Dossier,           // Garde le format original
+            "Statut Dossier": d.ID_Statut_Dossier,           // Garde le format original pour compatibilité avec ClientDossiers
             "Libelle Etape Actuelle": d.Libelle_Etape_Actuelle, // Garde le format original
             Date_Creation: d.Date_Creation,
             "Date Ouverture Dossier": d.Date_Ouverture_Dossier, // Garde le format original
         }));
 
-        // Retourne le succès avec la liste des dossiers sérialisés
+        // Retourne le succes avec la liste des dossiers serialisees
         return { success: true, data: serializedDossiers };
     } catch (error) {
-        // Log l'erreur avec un emoji pour une meilleure visibilité
-        console.error("❌ [getDossiersByClientId] error:", error);
-        // Retourne l'échec avec un message d'erreur convivial
-        return { success: false, error: "Erreur lors de la récupération des dossiers" };
+        // Log l'erreur avec un emoji pour une meilleure visibilite
+        console.error("⚠️ [getDossiersByClientId] error:", error);
+        // Retourne l'echec avec un message d'erreur convivial
+        return { success: false, error: "Erreur lors de la recuperation des dossiers" };
     }
 }
 
 /**
- * Crée un nouveau dossier dans la base de données
+ * Cree un nouveau dossier dans la base de donnees
  * Version Prisma SAFE (transactionnelle, typée, maintenable)
  */
 export async function createDossier(data: {
@@ -271,7 +286,7 @@ export async function createDossier(data: {
     observationDossier?: string;
 }) {
     try {
-        // 1️⃣ Sécurité : session utilisateur
+        // 1) Securite: verifier la session utilisateur
         const session = await auth.api.getSession({
             headers: await headers(),
         });
@@ -280,46 +295,95 @@ export async function createDossier(data: {
             throw new Error("Missing User Session");
         }
 
-        const userId = parseInt(session.user.id);
+        const userId = Number(session.user.id);
+        if (!Number.isInteger(userId)) {
+            throw new Error("Session utilisateur invalide");
+        }
 
-        // 2️⃣ Création du dossier via Prisma
-        const created = await prisma.tDossiers.create({
-            data: {
-                Branche: 0, // DEFAULT BRANCH
-                Type_Dossier: data.typeDossierId,
-                Client: data.clientId,
+        // 2) Validation minimale des champs obligatoires
+        if (!Number.isInteger(data.typeDossierId) || data.typeDossierId <= 0) {
+            throw new Error("Type de dossier invalide");
+        }
+        if (!Number.isInteger(data.clientId) || data.clientId <= 0) {
+            throw new Error("Client invalide");
+        }
 
-                Description_Dossier: data.description ?? "",
-                No_OT: data.noOT ?? "",
-                No_Dossier: data.noDossier ?? "",
+        // 3) Normalisation des champs avant insertion
+        const description = (data.description ?? "").trim();
+        const noOT = (data.noOT ?? "").trim();
+        const noDossier = (data.noDossier ?? "").trim();
+        const observation = (data.observationDossier ?? "").trim();
+        const statutDossier = data.statutDossierId ?? 0;
 
-                Poids_Brut_Pesee: data.poidsBrutPesee ?? 0,
-                Poids_Net_Pesee: data.poidsNetPesee ?? 0,
-                Volume_Pesee: data.volumePesee ?? 0,
+        const nbrePaquetage = data.nbrePaquetagePesee ?? 0;
+        const poidsBrut = data.poidsBrutPesee ?? 0;
+        const poidsNet = data.poidsNetPesee ?? 0;
+        const volume = data.volumePesee ?? 0;
+        const dateCreation = new Date();
 
-                Nbre_Paquetage_Pesee: data.nbrePaquetagePesee ?? 0,
+        // 4) Creation du dossier via SQL parametre.
+        // Pourquoi: dans ton client Prisma genere, tDossiers.create() n'est pas expose.
+        // TDossiers ayant un trigger INSERT actif, on utilise OUTPUT ... INTO.
+        const insertedRows = await prisma.$queryRaw<Array<{ ID_Dossier: number }>>`
+            DECLARE @Inserted TABLE (ID_Dossier INT);
 
-                Responsable_Dossier: parseInt(session.user.id),
-                Observation_Dossier: data.observationDossier ?? "",
-                Statut_Dossier: data.statutDossierId ?? 0,
-                Session: parseInt(session.user.id),
+            INSERT INTO dbo.TDossiers (
+                [Branche],
+                [Type Dossier],
+                [Client],
+                [Description Dossier],
+                [No OT],
+                [No Dossier],
+                [Nbre Paquetage Pesee],
+                [Poids Brut Pesee],
+                [Poids Net Pesee],
+                [Volume Pesee],
+                [Responsable Dossier],
+                [Convertion],
+                [Observation Dossier],
+                [Statut Dossier],
+                [Session],
+                [Date Creation]
+            )
+            OUTPUT INSERTED.[ID Dossier] INTO @Inserted (ID_Dossier)
+            VALUES (
+                ${0},
+                ${data.typeDossierId},
+                ${data.clientId},
+                ${description},
+                ${noOT},
+                ${noDossier},
+                ${nbrePaquetage},
+                ${poidsBrut},
+                ${poidsNet},
+                ${volume},
+                ${userId},
+                ${null},
+                ${observation},
+                ${statutDossier},
+                ${userId},
+                ${dateCreation}
+            );
 
-                Convertion: null, // Conversion par défaut
-                Date_Creation: new Date(),
-            },
-        });
+            SELECT ID_Dossier FROM @Inserted;
+        `;
 
-        // 3️⃣ Lecture EXACTE depuis la vue (très bonne pratique)
+        const createdId = insertedRows[0]?.ID_Dossier;
+        if (!createdId) {
+            throw new Error("Echec de creation du dossier");
+        }
+
+        // 5) Lecture du dossier cree depuis la vue (donnees enrichies)
         const dossier = await prisma.vDossiers.findFirst({
-            where: { ID_Dossier: created.ID_Dossier },
+            where: { ID_Dossier: createdId },
         });
 
         if (!dossier) {
             throw new Error("Created dossier not found in VDossiers");
         }
 
-        // 4️⃣ Sérialisation Decimal → JSON
-        const serializedDossier = JSON.parse(JSON.stringify(dossier));
+        // 6) Serialisation Decimal -> JSON
+        const serializedDossier = convertDecimalsToNumbers(dossier);
 
         revalidatePath("/dossiers");
 
@@ -336,14 +400,12 @@ export async function createDossier(data: {
     }
 }
 
-
-
 /**
- * Met à jour un dossier existant dans la base de données
+ * Met a jour un dossier existant dans la base de donnees
  */
 export async function updateDossier(id: string, data: any) {
     try {
-        // Vérification de l'authentification utilisateur
+        // Verification de l'authentification utilisateur
         const session = await auth.api.getSession({
             headers: await headers(),
         });
@@ -353,42 +415,89 @@ export async function updateDossier(id: string, data: any) {
             throw new Error("Missing User Session");
         }
 
-        // Met à jour le dossier dans la table TDossiers avec Prisma
+        // Met a jour le dossier dans la table TDossiers avec Prisma
         const dossier = await prisma.tDossiers.update({
             where: { ID_Dossier: parseInt(id) },  // Convertit l'ID string en nombre
             data: {
-                // Utilise l'opérateur spread conditionnel pour n'inclure que les champs fournis
+                // Utilise l'operateur spread conditionnel pour n'inclure que les champs fournis
                 ...(data.brancheId !== undefined && { Branche: data.brancheId }),
                 ...(data.typeDossierId !== undefined && { Type_Dossier: data.typeDossierId }),
                 ...(data.clientId !== undefined && { Client: data.clientId }),
                 ...(data.description && { Description_Dossier: data.description }),
                 ...(data.noOT && { No_OT: data.noOT }),
                 ...(data.noDossier && { No_Dossier: data.noDossier }),
-                // Vérifie undefined pour permettre la mise à jour à 0
-                ...(data.poidsBrutPesee !== undefined && { Poids_Brut_Pesee: data.poidsBrutPesee }),
-                ...(data.poidsNetPesee !== undefined && { Poids_Net_Pesee: data.poidsNetPesee }),
-                ...(data.volumePesee !== undefined && { Volume_Pesee: data.volumePesee }),
-                ...(data.nbrePaquetagePesee !== undefined && { Nbre_Paquetage_Pesee: data.nbrePaquetagePesee }),
                 ...(data.statutDossierId !== undefined && { Statut_Dossier: data.statutDossierId }),
             },
         });
 
-        // Invalide le cache de la page du dossier spécifique
+        // Convertir les Decimal en nombres pour les composants client
+        const serializedDossier = convertDecimalsToNumbers(dossier);
+        // Invalide le cache de la page du dossier specifique
         revalidatePath(`/dossiers/${id}`);
         // Invalide le cache de la liste des dossiers
         revalidatePath("/dossiers");
-        // Retourne le succès avec les données du dossier mis à jour
-        return { success: true, data: dossier };
+        // Retourne le success avec les donnees du dossier mis a  jour
+        return { success: true, data: serializedDossier };
     } catch (error) {
-        // Log l'erreur en cas d'échec
+        // Log l'erreur en cas d'echec
         console.error("updateDossier error:", error);
-        // Retourne l'échec avec l'erreur
-        return { success: false, error };
+        // Retourne l'echec avec l'erreur
+        return { 
+            success: false, 
+            error: error instanceof Error ? error.message : "Erreur inconnue", 
+        };
     }
 }
 
 /**
- * Supprime un dossier de la base de données
+ * Met a jour uniquement les champs de pesée d'un dossier
+ */
+export async function updateDossierPesee(id: string, data: any) {
+    try {
+        // Verification de l'authentification utilisateur
+        const session = await auth.api.getSession({
+            headers: await headers(),
+        });
+
+        // Si pas de session, lance une erreur
+        if (!session) {
+            throw new Error("Missing User Session");
+        }
+
+        // Met a jour le dossier dans la table TDossiers avec Prisma
+        const dossier = await prisma.tDossiers.update({
+            where: { ID_Dossier: parseInt(id) },  // Convertit l'ID string en nombre
+            data: {
+                // Utilise l'operateur spread conditionnel pour n'inclure que les champs fournis
+                // Verifie undefined pour permettre la mise a jour a 0
+                ...(data.poidsBrutPesee !== undefined && { Poids_Brut_Pesee: data.poidsBrutPesee }) || 0,
+                ...(data.poidsNetPesee !== undefined && { Poids_Net_Pesee: data.poidsNetPesee }) || 0,
+                ...(data.volumePesee !== undefined && { Volume_Pesee: data.volumePesee }) || 0,
+                ...(data.nbrePaquetagePesee !== undefined && { Nbre_Paquetage_Pesee: data.nbrePaquetagePesee }) || 0,
+            },
+        });
+
+        // Convertir les Decimal en nombres pour les composants client
+        const serializedDossier = convertDecimalsToNumbers(dossier);
+        // Invalide le cache de la page du dossier specifique
+        revalidatePath(`/dossiers/${id}`);
+        // Invalide le cache de la liste des dossiers
+        revalidatePath("/dossiers");
+        // Retourne le success avec les donnees du dossier mis a  jour
+        return { success: true, data: serializedDossier };
+    } catch (error) {
+        // Log l'erreur en cas d'echec
+        console.error("updateDossierPesee error:", error);
+        // Retourne l'echec avec l'erreur
+        return { 
+            success: false, 
+            error: error instanceof Error ? error.message : "Erreur inconnue", 
+        };
+    }
+}
+
+/**
+ * Supprime un dossier de la base de donnees
  */
 export async function deleteDossier(id: string) {
     try {
@@ -405,7 +514,7 @@ export async function deleteDossier(id: string) {
             throw new Error("Invalid dossier ID");
         }
 
-        // Vérifier s'il y a des colisages
+        // Verifier s'il y a des colisages
         const colisagesCount = await prisma.tColisageDossiers.count({
             where: { Dossier: dossierId },
         });
@@ -420,15 +529,15 @@ export async function deleteDossier(id: string) {
 
         // Invalide le cache de la liste des dossiers
         revalidatePath("/dossiers");
-        // Retourne le succès avec les données du dossier supprimé
+        // Retourne le success avec les donnees du dossier supprime
         return {
             success: true,
             data: JSON.parse(JSON.stringify(deleted)),
         };
     } catch (error) {
-        // Log l'erreur en cas d'échec
+        // Log l'erreur en cas d'echec
         console.error("deleteDossier error:", error);
-        // Retourne l'échec avec l'erreur
+        // Retourne l'echec avec l'erreur
         return {
             success: false,
             error: error instanceof Error ? error.message : "Erreur",
@@ -437,33 +546,33 @@ export async function deleteDossier(id: string) {
 }
 
 /**
- * Récupère tous les clients actifs pour les formulaires de sélection
+ * Recupere tous les clients actifs pour les formulaires de selection
  */
 export async function getAllClientsForSelect() {
     try {
-        // Requête Prisma pour récupérer tous les clients actifs
+        // Requete Prisma pour recuperer tous les clients actifs
         const clients = await prisma.tClients.findMany({
             where: {
-                ID_Client: { gt: 0 } // Exclure les valeurs système (ID > 0)
+                ID_Client: { gt: 0 } // Exclure les valeurs systeme (ID > 0)
             },
             select: {
-                ID_Client: true,    // Sélectionne uniquement l'ID pour optimiser
-                Nom_Client: true,  // Sélectionne uniquement le nom pour affichage
+                ID_Client: true,    // Selectionne uniquement l'ID pour optimiser
+                Nom_Client: true,  // Selectionne uniquement le nom pour affichage
             },
-            orderBy: { Nom_Client: "asc" }, // Trie par ordre alphabétique pour meilleure UX
+            orderBy: { Nom_Client: "asc" }, // Trie par ordre alphabetique pour meilleure UX
         });
 
-        // Mapper pour avoir un format cohérent et Retourne le succès avec la liste des clients
+        // Mapper pour avoir un format coherent et Retourne le succes avec la liste des clients
           return {
             success: true,
             data: clients.map(c => ({
                 id: c.ID_Client,
-                libelle: c.Nom_Client, // encore plus générique pour les Select
+                libelle: c.Nom_Client, // encore plus generique pour les Select
             })),
         };
         
     } catch (error) {
-        // En cas d'erreur, retourne l'échec
+        // En cas d'erreur, retourne l'echec
         console.error("getAllClientsForSelect error:", error);
         return {
             success: false,
@@ -476,27 +585,27 @@ export async function getAllClientsForSelect() {
  * ============================================================================
  * FONCTION : getAllTypesDossiers
  * ============================================================================
- * Rôle global : Récupère tous les types de dossiers disponibles.
- * Utilisé pour remplir les sélecteurs dans les formulaires de création/modification.
+ * Role global : Recupere tous les types de dossiers disponibles.
+ * Utilise pour remplir les selecteurs dans les formulaires de creation/modification.
  * 
  * Retour : Objet { success: boolean, data: array, error?: string }
  * ============================================================================
  */
 export async function getAllTypesDossiers() {
     try {
-        // Requête Prisma pour récupérer tous les types de dossiers valides
+        // Requete Prisma pour recuperer tous les types de dossiers valides
         const types = await prisma.tTypesDossiers.findMany({
             where: {
-                ID_Type_Dossier: { gt: 0 } // Exclure les valeurs système (ID > 0)
+                ID_Type_Dossier: { gt: 0 } // Exclure les valeurs systeme (ID > 0)
             },
             select: {
-                ID_Type_Dossier: true,          // Sélectionne uniquement l'ID
-                Libelle_Type_Dossier: true,     // et le libellé pour optimiser
+                ID_Type_Dossier: true,          // Selectionne uniquement l'ID
+                Libelle_Type_Dossier: true,     // et le libelle pour optimiser
             },
-            orderBy: { Libelle_Type_Dossier: "asc" }, // Trie par ordre alphabétique
+            orderBy: { Libelle_Type_Dossier: "asc" }, // Trie par ordre alphabetique
         });
 
-        // Mapper pour avoir un format cohérent et Retourne le succès avec la liste des types de dossiers
+        // Mapper pour avoir un format coherent et Retourne le succes avec la liste des types de dossiers
          return {
             success: true,
             data: types.map(t => ({
@@ -505,7 +614,7 @@ export async function getAllTypesDossiers() {
             })),
         };
     } catch (error) {
-        // En cas d'erreur, retourne l'échec
+        // En cas d'erreur, retourne l'echec
        console.error("getAllTypesDossiers error:", error);
         return {
             success: false,
@@ -515,7 +624,7 @@ export async function getAllTypesDossiers() {
 }
 
 /**
- * Récupère tous les sens de trafic
+ * Recupere tous les sens de trafic
  */
 export async function getAllSensTrafic() {
     try {
@@ -530,7 +639,7 @@ export async function getAllSensTrafic() {
             orderBy: { Libelle_Sens_Trafic: "asc" },
         });
 
-        // Mapper pour avoir un format cohérent
+        // Mapper pour avoir un format coherent
          return {
             success: true,
             data: sens.map(s => ({
@@ -548,13 +657,13 @@ export async function getAllSensTrafic() {
 }
 
 /**
- * Récupère tous les modes de transport
+ * Recupere tous les modes de transport
  */
 export async function getAllModesTransport() {
     try {
         const modes = await prisma.tModesTransport.findMany({
             where: {
-                ID_Mode_Transport: { not: "" } // Exclure les valeurs système
+                ID_Mode_Transport: { not: "" } // Exclure les valeurs systeme
             },
             select: {
                 ID_Mode_Transport: true,
@@ -563,7 +672,7 @@ export async function getAllModesTransport() {
             orderBy: { Libelle_Mode_Transport: "asc" },
         });
 
-        // Mapper pour avoir un format cohérent
+        // Mapper pour avoir un format coherent
         return {
             success: true,
             data: modes.map(m => ({
@@ -581,7 +690,7 @@ export async function getAllModesTransport() {
 }
 
 /**
- * Récupère toutes les branches
+ * Recupere toutes les branches
  */
 export async function getAllBranches() {
     try {
@@ -593,7 +702,7 @@ export async function getAllBranches() {
             orderBy: { Nom_Branche: "asc" },
         });
 
-        // Mapper pour avoir un format cohérent
+        // Mapper pour avoir un format cohÃ©rent
         return {
             success: true,
             data: branches.map(b => ({
@@ -611,7 +720,7 @@ export async function getAllBranches() {
 }
 
 /**
- * Récupère toutes les entités
+ * Recupere toutes les entites
  */
 export async function getAllEntites() {
     try {
@@ -623,7 +732,7 @@ export async function getAllEntites() {
             orderBy: { Nom_Entite: "asc" },
         });
 
-        // Mapper pour avoir un format cohérent
+        // Mapper pour avoir un format cohÃ©rent
          return {
             success: true,
             data: entites.map(e => ({
@@ -641,7 +750,7 @@ export async function getAllEntites() {
 }
 
 /**
- * Récupère tous les statuts de dossiers
+ * Recupere tous les statuts de dossiers
  */
 export async function getAllStatutsDossiers() {
     try {
@@ -653,7 +762,7 @@ export async function getAllStatutsDossiers() {
             orderBy: { Libelle_Statut_Dossier: "asc" },
         });
 
-        // Mapper pour avoir un format cohérent
+        // Mapper pour avoir un format coherent
         return {
             success: true,
             data: statuts.map(s => ({
@@ -671,11 +780,11 @@ export async function getAllStatutsDossiers() {
 }
 
 /**
- * Récupère toutes les étapes disponibles
+ * Recupere toutes les etapes disponibles
  */
 export async function getAllEtapes() {
     try {
-        // Utiliser les étapes actuelles des dossiers pour garantir la correspondance
+        // Utiliser les etapes actuelles des dossiers pour garantir la correspondance
         const etapes = await prisma.vDossiers.findMany({
             select: {
                 ID_Etape_Actuelle: true,
@@ -685,7 +794,7 @@ export async function getAllEtapes() {
             orderBy: { Libelle_Etape_Actuelle: "asc" },
         });
 
-        // Mapper pour avoir le même format
+        // Mapper pour avoir le meme format
         return {
             success: true,
             data: etapes.map(e => ({
@@ -702,5 +811,48 @@ export async function getAllEtapes() {
     }
 }
 
+/**
+ * Annule un dossier en cours
+ * Appelle la procédure stockée pSP_AnnulerDossier
+ * 
+ * Cette procédure:
+ * - Valide que le dossier est en cours (statut = 0)
+ * - Met le statut du dossier à -2 (annulé)
+ * 
+ * @param dossierId - ID du dossier à annuler
+ * @throws Error si le dossier n'est pas en cours ou erreur SQL
+ */
 
+export async function annulerDossier(dossierId: string) {
+    try {
+        const session = await auth.api.getSession({
+            headers: await headers(),
+        });
 
+        if (!session) {
+            throw new Error("Missing User Session");
+        }
+
+        const id = parseInt(dossierId);
+        await prisma.$executeRaw`EXEC pSP_AnnulerDossier @Id_Dossier = ${id}`;
+
+        revalidatePath(`/dossiers/${dossierId}`);
+        revalidatePath("/dossiers");
+        return { success: true };
+    } catch (error: any) {
+        console.error("annulerDossier error:", error);
+        const message = error.message || 'Erreur inconnue';
+
+        if (message.includes('FILE IS NOT IN PROGRESS')) {
+            return { 
+                success: false, 
+                error: 'Le dossier n\'est pas en cours. Seuls les dossiers en cours peuvent être annulés.' 
+            };
+        }
+
+        return { 
+            success: false, 
+            error: `Erreur lors de l'annulation du dossier: ${message}` 
+        };
+    }
+}

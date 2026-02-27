@@ -95,6 +95,36 @@ export class ColisagePDFReportV2 {
     this.currentY = this.margin;  // Initialise la position Y à la première marge
   }
 
+    /**
+   * ============================================================================
+   * MÉTHODE : addLogoFallback
+   * ============================================================================
+   * Rôle : Ajoute un logo de secours si le logo réel ne peut pas être chargé.
+   * Affiche un rectangle gris avec le texte "LOGO" et "SFX Pre-Douane".
+   * 
+   * Paramètres :
+   * @param width - Largeur du logo à afficher
+   * @param height - Hauteur du logo à afficher
+   * ============================================================================
+   */
+  private addLogoFallback(width: number, height: number) {
+    // --------------------------------------------------------------------
+    // 1️⃣ RECTANGLE DE FOND
+    // --------------------------------------------------------------------
+    this.doc.setFillColor(240, 240, 240);  // Couleur gris clair pour le fond
+    this.doc.rect(this.margin + 5, this.currentY + 3, width, height, 'F');  // Rectangle rempli
+    
+    // Texte "LOGO"
+    this.doc.setTextColor(100, 100, 100);
+    this.doc.setFontSize(10);
+    this.doc.setFont("helvetica", "bold");
+    this.doc.text("LOGO", this.margin + 5 + width/2 - 15, this.currentY + 3 + height/2);
+    
+    // Texte "SFX Pre-Douane"
+    this.doc.setFontSize(8);
+    this.doc.text("SFX Pre-Douane", this.margin + 5 + width/2 - 25, this.currentY + 3 + height/2 + 5);
+  }
+
   /**
    * ============================================================================
    * MÉTHODE : formatNumber
@@ -129,36 +159,6 @@ export class ColisagePDFReportV2 {
     } catch {
       return "-";  // Retourne "-" en cas d'erreur de parsing
     }
-  }
-
-  /**
-   * ============================================================================
-   * MÉTHODE : addLogoFallback
-   * ============================================================================
-   * Rôle : Ajoute un logo de secours si le logo réel ne peut pas être chargé.
-   * Affiche un rectangle gris avec le texte "LOGO" et "SFX Pre-Douane".
-   * 
-   * Paramètres :
-   * @param width - Largeur du logo à afficher
-   * @param height - Hauteur du logo à afficher
-   * ============================================================================
-   */
-  private addLogoFallback(width: number, height: number) {
-    // --------------------------------------------------------------------
-    // 1️⃣ RECTANGLE DE FOND
-    // --------------------------------------------------------------------
-    this.doc.setFillColor(240, 240, 240);  // Couleur gris clair pour le fond
-    this.doc.rect(this.margin + 5, this.currentY + 3, width, height, 'F');  // Rectangle rempli
-    
-    // Texte "LOGO"
-    this.doc.setTextColor(100, 100, 100);
-    this.doc.setFontSize(10);
-    this.doc.setFont("helvetica", "bold");
-    this.doc.text("LOGO", this.margin + 5 + width/2 - 15, this.currentY + 3 + height/2);
-    
-    // Texte "SFX Pre-Douane"
-    this.doc.setFontSize(8);
-    this.doc.text("SFX Pre-Douane", this.margin + 5 + width/2 - 25, this.currentY + 3 + height/2 + 5);
   }
 
   private addSummary(colisages: ColisageData[]) {
@@ -226,56 +226,67 @@ export class ColisagePDFReportV2 {
   }
 
   private addColisagesByGroup(colisages: ColisageData[]) {
-    // Regrouper par FOURNISSEUR, puis par NUMÉRO DE FACTURE
+    // Regrouper par FOURNISSEUR → NUMÉRO DE COMMANDE → NUMÉRO DE FACTURE (3 niveaux)
     const groupedData = colisages.reduce((acc, colisage) => {
       const fournisseur = colisage.Nom_Fournisseur || 'Fournisseur non spécifié';
+      const numeroCommande = colisage.No_Commande || 'Sans numéro de commande';
       const numeroFacture = colisage.No_Facture || 'Sans numéro de facture';
       
       if (!acc[fournisseur]) {
         acc[fournisseur] = {};
       }
-      if (!acc[fournisseur][numeroFacture]) {
-        acc[fournisseur][numeroFacture] = [];
+      if (!acc[fournisseur][numeroCommande]) {
+        acc[fournisseur][numeroCommande] = {};
+      }
+      if (!acc[fournisseur][numeroCommande][numeroFacture]) {
+        acc[fournisseur][numeroCommande][numeroFacture] = [];
       }
       
-      acc[fournisseur][numeroFacture].push(colisage);
+      acc[fournisseur][numeroCommande][numeroFacture].push(colisage);
       return acc;
-    }, {} as Record<string, Record<string, ColisageData[]>>);
+    }, {} as Record<string, Record<string, Record<string, ColisageData[]>>>);
 
-    Object.entries(groupedData).forEach(([fournisseur, factures]) => {
+    Object.entries(groupedData).forEach(([fournisseur, commandes]) => {
       // Vérifier si on a assez de place pour le groupe
       if (this.currentY > this.pageHeight - 100) {
         this.doc.addPage();
         this.currentY = this.margin;
       }
 
-      // Titre du FOURNISSEUR (niveau 1)
+      // NIVEAU 1: Titre du FOURNISSEUR
       this.doc.setFontSize(12);
       this.doc.setFont("helvetica", "bold");
       this.doc.setTextColor(41, 128, 185);
       this.doc.text(`FOURNISSEUR: ${fournisseur.toUpperCase()}`, this.margin, this.currentY);
       this.currentY += 10;
 
-      Object.entries(factures).forEach(([numeroFacture, colisagesGroup]) => {
-        // Sous-titre du NUMÉRO DE FACTURE (niveau 2)
+      Object.entries(commandes).forEach(([numeroCommande, factures]) => {
+        Object.entries(factures).forEach(([numeroFacture, colisagesGroup]) => {
+        // NIVEAU 2 & 3: Commande et Facture sur la même ligne
         this.doc.setFontSize(10);
         this.doc.setFont("helvetica", "bold");
+        this.doc.setTextColor(52, 73, 94);
+       
+        // Commande à gauche
+        this.doc.text(`Commande N°: ${numeroCommande}`, this.margin + 5, this.currentY);
+
+        // Facture à droite (ou au milieu)
         this.doc.setTextColor(0, 0, 0);
-        this.doc.text(`Facture N°: ${numeroFacture}`, this.margin + 5, this.currentY);
+        this.doc.text(`Facture N°: ${numeroFacture}`, this.margin + 100, this.currentY);
+          
         this.currentY += 8;
 
-        // Préparer les données du tableau avec l'ordre demandé
-        const tableData = colisagesGroup.map(colisage => [
-        colisage.No_Commande || '-',           // N° Commande
-        colisage.Item_No || '-',               // Item No
-        (colisage.Description_Colis || '').substring(0, 35), // Description
-        colisage.HS_Code || '-',               // HS Code
-        this.formatNumber(colisage.Qte_Colis), // Quantité
-        `${this.formatNumber(colisage.Prix_Unitaire_Colis)} ${colisage.Code_Devise || ''}`, // Prix Unitaire
-        this.formatNumber(colisage.Volume),    // Volume
-        colisage.Regroupement_Client || '-',   // Site
-        colisage.Pays_Origine || '-',          // Pays d'Origine
-      ]);
+        // Préparer les données du tableau - COMMENCE PAR ITEM_NO
+          const tableData = colisagesGroup.map(colisage => [
+            colisage.Item_No || '-',               // Item No (1ère colonne)
+            (colisage.Description_Colis || '').substring(0, 35), // Description
+            colisage.HS_Code || '-',               // HS Code
+            this.formatNumber(colisage.Qte_Colis), // Quantité
+            `${this.formatNumber(colisage.Prix_Unitaire_Colis)} ${colisage.Code_Devise || ''}`, // Prix Unitaire
+            this.formatNumber(colisage.Volume),    // Volume
+            colisage.Regroupement_Client || '-',   // Site
+            colisage.Pays_Origine || '-',          // Pays d'Origine
+          ]);
 
         // Calculer les totaux du groupe
         const totalQte = colisagesGroup.reduce((sum, c) => sum + Number(c.Qte_Colis || 0), 0);
@@ -311,7 +322,6 @@ export class ColisagePDFReportV2 {
         autoTable(this.doc, {
           startY: this.currentY,
           head: [[
-            'N° Commande',
             'Item No',
             'Description',
             'HS Code',
@@ -341,15 +351,14 @@ export class ColisagePDFReportV2 {
             fillColor: [248, 249, 250]
           },
           columnStyles: {
-            0: { cellWidth: 28, halign: 'center' }, // N° Commande
-            1: { cellWidth: 22, halign: 'center' }, // Item No
-            2: { cellWidth: 60, halign: 'left' },   // Description
-            3: { cellWidth: 28, halign: 'center' }, // HS Code
-            4: { cellWidth: 22, halign: 'right' },  // Quantité
-            5: { cellWidth: 30, halign: 'right' },  // Prix Unitaire
-            6: { cellWidth: 22, halign: 'right' },  // Volume
-            7: { cellWidth: 27, halign: 'center' }, // Site
-            8: { cellWidth: 28, halign: 'center' }, // Pays d'Origine
+            0: { cellWidth: 22, halign: 'center' }, // Item No
+            1: { cellWidth: 60, halign: 'left' },   // Description
+            2: { cellWidth: 28, halign: 'center' }, // HS Code
+            3: { cellWidth: 22, halign: 'right' },  // Quantité
+            4: { cellWidth: 30, halign: 'right' },  // Prix Unitaire
+            5: { cellWidth: 22, halign: 'right' },  // Volume
+            6: { cellWidth: 27, halign: 'center' }, // Site
+            7: { cellWidth: 28, halign: 'center' }, // Pays d'Origine
           },
           margin: { left: this.margin, right: this.margin },
           tableWidth: this.usableWidth,
@@ -365,7 +374,10 @@ export class ColisagePDFReportV2 {
         });
 
         this.currentY = (this.doc as any).lastAutoTable.finalY + 10;
+        });
       });
+
+      
 
       this.currentY += 5;
     });
@@ -377,19 +389,14 @@ export class ColisagePDFReportV2 {
     for (let i = 1; i <= pageCount; i++) {
       this.doc.setPage(i);
       
-      // Ligne de séparation élégante
-      this.doc.setDrawColor(52, 152, 219);
-      this.doc.setLineWidth(0.5);
-      this.doc.line(this.margin, this.pageHeight - 20, this.pageWidth - this.margin, this.pageHeight - 20);
-      
       // Pied de page avec style
       this.doc.setFontSize(8);
       this.doc.setFont("helvetica", "normal");
       this.doc.setTextColor(100, 100, 100);
       
-      // Informations à gauche
+     // Informations à gauche
       this.doc.text(
-        `Généré le ${this.formatDate(new Date())} - Rapport de colisages`,
+        `©Copyright Softronic Innoving`,
         this.margin,
         this.pageHeight - 12
       );
@@ -416,7 +423,7 @@ export class ColisagePDFReportV2 {
   private async loadLogoAsBase64(): Promise<string | null> {
     try {
       // Essayer de charger le logo depuis le dossier public
-      const response = await fetch('/logo.png');
+      const response = await fetch('/logo.jpeg');
       if (!response.ok) {
         console.warn('Logo non trouvé, utilisation du fallback');
         return null;
