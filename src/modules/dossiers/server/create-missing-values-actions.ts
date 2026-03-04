@@ -379,7 +379,7 @@ export async function createMissingRegimes(
             const result = await prisma.tRegimesDeclarations.create({
                 data: {
                     Libelle_Regime_Declaration: libelle,                    // Libellé généré
-                    Taux_DC: tauxDC,                                        // Taux DC (0-1)
+                    Taux_Regime: tauxDC,                                    // Taux regime (0-1)
                     Regime_Douanier: regimeDouanier.ID_Regime_Douanier,    // ID du régime douanier
                     Session: parseInt(session.user.id),                     // ID de la session utilisateur
                     Date_Creation: new Date(),                              // Date de création

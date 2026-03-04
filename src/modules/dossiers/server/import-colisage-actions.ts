@@ -261,7 +261,7 @@ async function validateAndDetectMissing(rows: any[], clientId: number) {
                     select: {
                         ID_Regime_Declaration: true,
                         Libelle_Regime_Declaration: true,
-                        Taux_DC: true,
+                        Taux_Regime: true,
                         Regime_Douanier: true
                     }
                 }
@@ -279,7 +279,7 @@ async function validateAndDetectMissing(rows: any[], clientId: number) {
         const availableRegimeTaux = new Set(
             filteredAssociations
                 .filter(assoc => assoc.TRegimesDeclarations)
-                .map(assoc => parseFloat(assoc.TRegimesDeclarations!.Taux_DC.toString()).toFixed(4))
+                .map(assoc => parseFloat(assoc.TRegimesDeclarations!.Taux_Regime.toString()).toFixed(4))
         );
         
         console.log('✅ [validateAndDetectMissing] Régimes trouvés et associés:', Array.from(availableRegimeTaux));
@@ -318,7 +318,7 @@ async function validateAndDetectMissing(rows: any[], clientId: number) {
                             // Essayer aussi avec le format avec préfixe
                             { Libelle_Regime_Declaration: `${row.regimeCode || 'IM4'} ${libelle}` },
                             // Essayer avec le taux DC directement
-                            { Taux_DC: ratio / 100 },
+                            { Taux_Regime: ratio / 100 },
                         ]
                     }
                 });
@@ -491,7 +491,7 @@ export async function importSelectedColisages(
                     TRegimesDeclarations: {
                         select: {
                             ID_Regime_Declaration: true,
-                            Taux_DC: true,
+                            Taux_Regime: true,
                             Regime_Douanier: true
                         }
                     }
@@ -509,7 +509,7 @@ export async function importSelectedColisages(
                 
                 const matchingAssociation = filteredAssociations.find(assoc => 
                     assoc.TRegimesDeclarations && 
-                    Math.abs(parseFloat(assoc.TRegimesDeclarations.Taux_DC.toString()) - targetTaux) < 0.0001
+                    Math.abs(parseFloat(assoc.TRegimesDeclarations.Taux_Regime.toString()) - targetTaux) < 0.0001
                 );
                 
                 if (matchingAssociation && matchingAssociation.TRegimesDeclarations) {

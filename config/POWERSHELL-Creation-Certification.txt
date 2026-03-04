@@ -1,0 +1,33 @@
+# ======================================== CREATION DES CERTIFICATS PFX et CER =======================================
+#
+# 	== REMPLACER <<SERVER_NAME>> PAR LE NOM DU SERVEUR
+#      	== REMPLACER <<COMPANY_CODE>> PAR LE CODE DE LA COMPAGNIE
+#	== REMPLACER <<CERTIFICATE_PASSWORD>> PAR LE PASSWORD DE VOS CERTIFICATS AVEC LES BONNES PRATIQUES SFX_Pre-Douane
+# ====================================================================================================================
+
+$cert = New-SelfSignedCertificate -Subject "CN=CERTIFICATE-SFX_Pre-Douane" `
+    -CertStoreLocation "cert:\LocalMachine\My" `
+    -FriendlyName "SFX_Pre-Douane" `
+    -NotAfter (Get-Date).AddYears(5) `
+    -KeyAlgorithm RSA `
+    -KeyLength 4096 `
+    -HashAlgorithm SHA384 `
+    -KeyExportPolicy Exportable `
+    -TextExtension @(
+        "2.5.29.17={text}DNS=SFX-DEV-01",          # SAN = SOFTRONIC CM
+        "2.5.29.37={text}1.3.6.1.5.5.7.3.1"       # EKU = TLS Web Server Auth
+    )
+
+# 2. Exporter le certificat en .pfx avec mot de passe fort
+$pwd = ConvertTo-SecureString -String "x3HtcBO71@Q" -Force -AsPlainText
+$pfxPath = "C:\SOFTRONIC\sfx_predouanevtonba\SFX-DEV-01_SFX_Pre-Douane.pfx"
+Export-PfxCertificate -Cert $cert -FilePath $pfxPath -Password $pwd
+
+# 3. Exporter aussi au format .cer (nécessaire pour Trusted Root CA)
+$cerPath = "C:\SOFTRONIC\sfx_predouanevtonba\SFX-DEV-01_SFX_Pre-Douane.cer"
+Export-Certificate -Cert $cert -FilePath $cerPath
+
+# 4. Importer le certificat dans le magasin Trusted Root Certification Authorities
+Import-Certificate -FilePath $cerPath -CertStoreLocation "Cert:\LocalMachine\Root"
+
+Write-Output "Certificat créé, exporté et installé avec succès pour SFX_Pre-Douane."

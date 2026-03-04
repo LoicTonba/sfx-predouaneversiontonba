@@ -21,12 +21,10 @@ interface RegimeDeclarationData {
     libelleRegimeDeclaration: string;
     tauxRegime: number;
     regimeDouanier: number;
-    session: number;
     dateCreation: string | null;
-    rowVer: any;
     tRegimesDouaniers?: {
         id: number;
-        codeRegimeDouanier: string;
+        codeRegimeDouanier?: string;
         libelleRegimeDouanier: string;
     } | null;
     tUtilisateurs?: {

@@ -1,0 +1,15 @@
+cd /d "C:\Program Files\nssm-2.24\win64"
+
+sc.exe stop SFX_Pre-Douane
+sc.exe delete SFX_Pre-Douane
+
+nssm install SFX_Pre-Douane "C:\Program Files\nodejs\node.exe" "C:\SOFTRONIC\sfx_predouanevtonba\server.js"
+nssm set SFX_Pre-Douane AppDirectory "C:\SOFTRONIC\sfx_predouanevtonba"
+
+nssm set SFX_Pre-Douane AppEnvironmentExtra "NODE_ENV=production" "PORT=14025" "BIND_HOST=0.0.0.0" "HTTPS_PFX_PATH=C:\SOFTRONIC\sfx_predouanevtonba\SFX-DEV-01_SFX_Pre-Douane.pfx" "HTTPS_PFX_PASSWORD=x3HtcBO71@Q"
+
+nssm set SFX_Pre-Douane AppStdout "C:\SOFTRONIC\sfx_predouanevtonba\logs\service-out.log"
+nssm set SFX_Pre-Douane AppStderr "C:\SOFTRONIC\sfx_predouanevtonba\logs\service-err.log"
+nssm set SFX_Pre-Douane AppRotateFiles 1
+nssm set SFX_Pre-Douane AppRotateOnline 1
+nssm set SFX_Pre-Douane AppExit Default Restart

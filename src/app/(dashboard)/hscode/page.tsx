@@ -24,7 +24,7 @@ interface Props {
 ============================================================================ */
 
 async function HscodeContent({ search }: { search: string }) {
-  const res = await getAllHSCodes(search);
+  const res = await getAllHSCodes(1, 10000, search);
 
   if (!res.success || !res.data) {
     return <HscodeErrorView />;

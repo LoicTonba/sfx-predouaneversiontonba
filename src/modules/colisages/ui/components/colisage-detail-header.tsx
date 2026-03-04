@@ -21,12 +21,12 @@ import {
     BreadcrumbList,
     BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
-import { EditColisageDialog } from "./edit-colisage-dialog";
+import { EditColisageDialog } from "@/modules/dossiers/ui/components/edit-colisage-dialog";
 
 interface Dossier {
-    idDossier: number;
-    noDossier?: string;
-    No_Dossier?: string;
+    ID_Dossier: number;
+    No_Dossier?: string | null;
+    noDossier?: string | null;
 }
 
 interface Colisage {
@@ -42,6 +42,8 @@ interface ColisageDetailHeaderProps {
 export const ColisageDetailHeader = ({ dossier, colisage }: ColisageDetailHeaderProps) => {
     const router = useRouter();
     const [showEditDialog, setShowEditDialog] = useState(false);
+    const dossierId = dossier.ID_Dossier;
+    const dossierLabel = dossier.No_Dossier || dossier.noDossier || `Dossier #${dossierId}`;
 
     const [DeleteConfirmation, confirmDelete] = useConfirm(
         "Supprimer le colisage?",
@@ -57,7 +59,7 @@ export const ColisageDetailHeader = ({ dossier, colisage }: ColisageDetailHeader
 
             if (result.success) {
                 toast.success("Colisage supprimé avec succès");
-                router.push(`/dossiers/${dossier.idDossier}`);
+                router.push(`/dossiers/${dossierId}`);
             } else {
                 toast.error(result.error || "Erreur lors de la suppression");
             }
@@ -87,7 +89,7 @@ export const ColisageDetailHeader = ({ dossier, colisage }: ColisageDetailHeader
                 open={showEditDialog}
                 onOpenChange={setShowEditDialog}
                 colisage={colisage}
-                dossierId={dossier.idDossier}
+                dossierId={dossierId}
                 onSuccess={handleEditSuccess}
             />
             <div className="flex items-center justify-between px-4 md:px-8 py-4">
@@ -105,8 +107,8 @@ export const ColisageDetailHeader = ({ dossier, colisage }: ColisageDetailHeader
                         </BreadcrumbSeparator>
                         <BreadcrumbItem>
                             <BreadcrumbLink asChild className="font-medium text-xl">
-                                <Link href={`/dossiers/${dossier.idDossier}`}>
-                                    {dossier.No_Dossier || `Dossier #${dossier.noDossier}`}
+                                <Link href={`/dossiers/${dossierId}`}>
+                                    {dossierLabel}
                                 </Link>
                             </BreadcrumbLink>
                         </BreadcrumbItem>
@@ -115,7 +117,7 @@ export const ColisageDetailHeader = ({ dossier, colisage }: ColisageDetailHeader
                         </BreadcrumbSeparator>
                         <BreadcrumbItem>
                             <BreadcrumbLink asChild className="font-medium text-xl text-foreground">
-                                <Link href={`/dossiers/${dossier.idDossier}/colisages/${colisage.ID_Colisage_Dossier}`}>
+                                <Link href={`/dossiers/${dossierId}/colisages/${colisage.ID_Colisage_Dossier}`}>
                                     {colisage.Description_Colis || `Colisage #${colisage.ID_Colisage_Dossier}`}
                                 </Link>
                             </BreadcrumbLink>

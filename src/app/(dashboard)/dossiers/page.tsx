@@ -39,7 +39,15 @@ async function DossiersContent({
     }
 
     // Les données Prisma arrivent déjà avec les bons noms de champs
-    return <DossiersView dossiers={data} total={total} currentPage={currentPage} />
+    const normalizedData = data.map((dossier) => ({
+        ...dossier,
+        Nbre_Paquetage_Pesee: Number(dossier.Nbre_Paquetage_Pesee ?? 0),
+        Poids_Brut_Pesee: Number(dossier.Poids_Brut_Pesee ?? 0),
+        Poids_Net_Pesee: Number(dossier.Poids_Net_Pesee ?? 0),
+        Volume_Pesee: Number(dossier.Volume_Pesee ?? 0),
+    }));
+
+    return <DossiersView dossiers={normalizedData} total={total} currentPage={currentPage} />
 }
 
 const Page = async ({ searchParams }: Props) => {

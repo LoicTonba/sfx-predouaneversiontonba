@@ -32,8 +32,8 @@ export const CreatePaysDialogForm = ({
   const form = useForm<TPaysCreate>({
     resolver: zodResolver(TPaysCreateSchema),
     defaultValues: {
-      codePays: initialCode,
-      libellePays: "",
+      code: initialCode,
+      libelle: "",
     },
   });
 
@@ -58,7 +58,7 @@ export const CreatePaysDialogForm = ({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="codePays"
+          name="code"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Code*</FormLabel>
@@ -71,7 +71,7 @@ export const CreatePaysDialogForm = ({
         />
         <FormField
           control={form.control}
-          name="libellePays"
+          name="libelle"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Libellé*</FormLabel>

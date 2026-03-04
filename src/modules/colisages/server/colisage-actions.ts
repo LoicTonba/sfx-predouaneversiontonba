@@ -1680,6 +1680,16 @@ export async function importSelectedColisages(
             ""
           );
           
+          // Préparer ratio régime en acceptant les deux formats de clés.
+          const rawRegimeRatio = row.regimeRatio ?? row.Regime_Ratio;
+          const parsedRegimeRatio = rawRegimeRatio !== undefined && rawRegimeRatio !== null && !isNaN(rawRegimeRatio)
+            ? (typeof rawRegimeRatio === 'string' ? parseFloat(rawRegimeRatio) : rawRegimeRatio)
+            : 0;
+          // IMPORTANT:
+          // la base stocke Taux Regime en DECIMAL(24,3), on normalise donc ici
+          // pour éviter les faux "NOT EXIST FOR THIS CUSTOMER" sur 0.4851 vs 0.485.
+          const regimeRatio = normalizeRegimeRatio(parsedRegimeRatio);
+
           try {
             console.log(`\n========== LIGNE ${i + 1}/${rows.length} ==========`);
              
@@ -1694,16 +1704,6 @@ export async function importSelectedColisages(
               status: row.status,  // "new" ou "existing"
               existingId: row.existingId,  // ID si existant
             });
-
-            // Préparer ratio régime en acceptant les deux formats de clés.
-            const rawRegimeRatio = row.regimeRatio ?? row.Regime_Ratio;
-            const parsedRegimeRatio = rawRegimeRatio !== undefined && rawRegimeRatio !== null && !isNaN(rawRegimeRatio)
-              ? (typeof rawRegimeRatio === 'string' ? parseFloat(rawRegimeRatio) : rawRegimeRatio)
-              : 0;
-            // IMPORTANT:
-            // la base stocke Taux Regime en DECIMAL(24,3), on normalise donc ici
-            // pour éviter les faux "NOT EXIST FOR THIS CUSTOMER" sur 0.4851 vs 0.485.
-            const regimeRatio = normalizeRegimeRatio(parsedRegimeRatio);
 
             // Pré-vérification applicative pour éviter l'erreur SQL 2787 issue
             // du message FORMAT('%') dans la procédure quand le régime n'est pas associé.

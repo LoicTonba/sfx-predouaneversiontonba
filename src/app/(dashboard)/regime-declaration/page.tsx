@@ -38,8 +38,6 @@ async function RegimeDeclarationContent({
     return (
         <RegimeDeclarationView
             regimeDeclarations={data}
-            total={total}
-            currentPage={currentPage}
         />
     );
 }

@@ -122,7 +122,7 @@ export const DossierForm = ({
             try {
                 const result = await createDossier(data);
                 if (result.success) {
-                    onSuccess?.(result.data?.id?.toString());
+                    onSuccess?.(result.data?.ID_Dossier?.toString());
                     toast.success("Dossier créé avec succès");
                 } else {
                     toast.error("Erreur lors de la création du dossier");

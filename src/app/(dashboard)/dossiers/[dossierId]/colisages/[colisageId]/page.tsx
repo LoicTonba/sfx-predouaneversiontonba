@@ -23,14 +23,19 @@ async function ColisageDetailContent({ dossierId, colisageId }: { dossierId: num
         getColisageById(colisageId)
     ]);
 
-    if (!dossierResult.success || !colisageResult.success) {
+    if (
+        !dossierResult.success ||
+        !colisageResult.success ||
+        !dossierResult.data ||
+        !colisageResult.data
+    ) {
         notFound();
     }
 
     return (
         <>
             <ColisageDetailHeader 
-                dossier={dossierResult.data} 
+                dossier={dossierResult.data}
                 colisage={colisageResult.data}
             />
             <ColisageDetailView 

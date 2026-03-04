@@ -266,6 +266,7 @@ export const DossierIdView = ({ dossierId, dossier }: Props) => {
                                 <NoteDetailView 
                                     dossierId={dossier.ID_Dossier} 
                                     entiteId={dossier.ID_Entite}
+                                    dossierName={dossier.No_Dossier || dossier.No_OT || `dossier-${dossier.ID_Dossier}`}
                                 />
                             </TabsContent>
                         </CardContent>
