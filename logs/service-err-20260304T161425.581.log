@@ -1,0 +1,22 @@
+Erreur lors de la récupération de la session: Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at l (C:\SOFTRONIC\sfx_predouanevtonba\.next\server\chunks\ssr\_27803adc._.js:11:1504)
+    at async Object.getSession (C:\SOFTRONIC\sfx_predouanevtonba\.next\server\chunks\ssr\[root-of-the-server]__9f8d5313._.js:1:431)
+    at async j (C:\SOFTRONIC\sfx_predouanevtonba\.next\server\chunks\ssr\[root-of-the-server]__73ee78dc._.js:1:11044)
+Erreur lors de la connexion: Error: Code utilisateur invalide
+    at h (C:\SOFTRONIC\sfx_predouanevtonba\.next\server\chunks\ssr\_27803adc._.js:10:410)
+    at async j (C:\SOFTRONIC\sfx_predouanevtonba\.next\server\chunks\ssr\_27803adc._.js:11:644)
+    at async m (C:\SOFTRONIC\sfx_predouanevtonba\.next\server\chunks\ssr\_bfe64e03._.js:1:7956)
+    at async p (C:\SOFTRONIC\sfx_predouanevtonba\.next\server\chunks\ssr\_bfe64e03._.js:2:2712)
+    at async Module.K (C:\SOFTRONIC\sfx_predouanevtonba\.next\server\chunks\ssr\_bfe64e03._.js:2:7927)
+Erreur lors de la connexion: Error: Code utilisateur invalide
+    at h (C:\SOFTRONIC\sfx_predouanevtonba\.next\server\chunks\ssr\_27803adc._.js:10:410)
+    at async j (C:\SOFTRONIC\sfx_predouanevtonba\.next\server\chunks\ssr\_27803adc._.js:11:644)
+    at async m (C:\SOFTRONIC\sfx_predouanevtonba\.next\server\chunks\ssr\_bfe64e03._.js:1:7956)
+    at async p (C:\SOFTRONIC\sfx_predouanevtonba\.next\server\chunks\ssr\_bfe64e03._.js:2:2712)
+    at async Module.K (C:\SOFTRONIC\sfx_predouanevtonba\.next\server\chunks\ssr\_bfe64e03._.js:2:7927)
+Erreur lors de la connexion: Error: Code utilisateur invalide
+    at h (C:\SOFTRONIC\sfx_predouanevtonba\.next\server\chunks\ssr\_27803adc._.js:10:410)
+    at async j (C:\SOFTRONIC\sfx_predouanevtonba\.next\server\chunks\ssr\_27803adc._.js:11:644)
+    at async m (C:\SOFTRONIC\sfx_predouanevtonba\.next\server\chunks\ssr\_bfe64e03._.js:1:7956)
+    at async p (C:\SOFTRONIC\sfx_predouanevtonba\.next\server\chunks\ssr\_bfe64e03._.js:2:2712)
+    at async Module.K (C:\SOFTRONIC\sfx_predouanevtonba\.next\server\chunks\ssr\_bfe64e03._.js:2:7927)

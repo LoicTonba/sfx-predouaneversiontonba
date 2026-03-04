@@ -1,0 +1,97 @@
+1. Nettoyage complet de l’ancien service
+Pourquoi: éviter les paramètres NSSM cassés (c’était ton problème).
+
+sc stop SFX_Pre-Douane
+sc delete SFX_Pre-Douane
+sc query SFX_Pre-Douane
+
+Résultat attendu:
+
+sc query doit finir par FAILED 1060 (service inexistant).
+
+2. Vérifier prérequis
+Pourquoi: service Next en prod a besoin du build .next.
+
+cd /d C:\SOFTRONIC\sfx_predouanevtonba
+pnpm build
+dir .next
+
+Résultat attendu:
+
+pnpm build passe.
+dossier .next existe.
+
+3. Test manuel de server.js (avant NSSM)
+Pourquoi: si ça ne marche pas en manuel, NSSM ne marchera jamais.
+
+cd /d C:\SOFTRONIC\sfx_predouanevtonba
+set PORT=14025
+set BIND_HOST=0.0.0.0
+set HTTPS_PFX_PATH=C:\SOFTRONIC\sfx_predouanevtonba\SFX-DEV-01_SFX_Pre-Douane.pfx
+set HTTPS_PFX_PASSWORD=x3HtcBO71@Q
+node server.js
+
+Résultat attendu:
+
+message 0.0.0.0 (line 14025)
+
+Dans un 2e terminal admin:
+
+netstat -ano | findstr :14025
+
+Tu dois voir LISTENING.
+
+Arrête ensuite avec Ctrl + C.
+
+4. Recréer le service NSSM correctement
+Pourquoi: lancer node.exe server.js avec le bon dossier et les bonnes variables.
+
+cd /d "C:\Program Files\nssm-2.24\win64"
+
+sc stop SFX_Pre-Douane
+sc delete SFX_Pre-Douane
+
+nssm install SFX_Pre-Douane "C:\Program Files\nodejs\node.exe" "C:\SOFTRONIC\sfx_predouanevtonba\server.js"
+nssm set SFX_Pre-Douane AppDirectory "C:\SOFTRONIC\sfx_predouanevtonba"
+
+nssm set SFX_Pre-Douane AppEnvironmentExtra "PORT=14027" "BIND_HOST=0.0.0.0" "PUBLIC_HOST=SFX-DEV-01" "HTTPS_PFX_PATH=C:\SOFTRONIC\sfx_predouanevtonba\SFX-DEV-01_SFX_Pre-Douane.pfx" "HTTPS_PFX_PASSWORD=x3HtcBO71@Q"
+
+nssm set SFX_Pre-Douane AppStdout "C:\SOFTRONIC\sfx_predouanevtonba\logs\service-out.log"
+nssm set SFX_Pre-Douane AppStderr "C:\SOFTRONIC\sfx_predouanevtonba\logs\service-err.log"
+nssm set SFX_Pre-Douane AppRotateFiles 1
+nssm set SFX_Pre-Douane AppRotateOnline 1
+nssm set SFX_Pre-Douane AppExit Default Restart
+
+
+5. Vérifier la config NSSM
+Pourquoi: confirmer que rien n’est mal pointé (surtout AppDirectory).
+
+nssm get SFX_Pre-Douane Application
+nssm get SFX_Pre-Douane AppParameters
+nssm get SFX_Pre-Douane AppDirectory
+nssm get SFX_Pre-Douane AppEnvironmentExtra
+
+6. Mettre le bon compte Windows pour accès DB
+Pourquoi: LocalSystem n’a souvent pas les droits SQL.
+
+Ouvre services.msc
+Service SFX_Pre-Douane → Propriétés → onglet Connexion
+Mets ton compte Windows admin/service qui a accès DB
+Appliquer
+
+7. Démarrer et tester
+
+sc start SFX_Pre-Douane
+sc query SFX_Pre-Douane
+netstat -ano | findstr :14027
+
+
+Dans navigateur:
+
+utilise obligatoirement https://sfx-dev-01:14025
+pas juste sfx-dev-01 (line 14025)
+
+8. Si encore KO, diagnostic immédiat
+
+type C:\SOFTRONIC\sfx_predouanevtonba\logs\service-err.log
+type C:\SOFTRONIC\sfx_predouanevtonba\logs\service-out.log
