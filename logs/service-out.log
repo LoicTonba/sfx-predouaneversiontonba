@@ -1,0 +1,542 @@
+HTTPS ready on https://SFX-DEV-01:14027
+Listening on 0.0.0.0:14027
+dossierId 1
+dossier {
+  ID_Dossier: 1,
+  ID_Branche: 0,
+  Nom_Branche: 'DEFAULT BRANCH',
+  ID_Entite: 0,
+  Nom_Entite: 'DEFAULT ENTITY',
+  ID_Groupe_Entite: 0,
+  ID_Pays: 0,
+  Libelle_Pays: 'DEFAULT COUNTRY',
+  Devise_Locale: '',
+  ID_Type_Dossier: 2,
+  Libelle_Type_Dossier: 'Sea Export',
+  ID_Sens_Trafic: '2',
+  Libelle_Sens_Trafic: 'Export',
+  ID_Mode_Transport: '1',
+  Libelle_Mode_Transport: 'Sea',
+  ID_Client: 4,
+  Nom_Client: 'ADDAX PETROLEUM CAMEROON COMPANY',
+  Description_Dossier: 'Exportations des potiers en Amérique',
+  No_OT: '001',
+  No_Dossier: 'CM25000090',
+  Nbre_Paquetage_Pesee: 12,
+  Poids_Brut_Pesee: 1500,
+  Poids_Net_Pesee: 1520,
+  Volume_Pesee: 20,
+  Responsable_ID: 1,
+  Nom_Responsable: 'TONBA LOIC',
+  Date_Declaration: 2026-02-27T23:00:00.000Z,
+  ID_Etape_Actuelle: 9,
+  Libelle_Etape_Actuelle: 'Operations Completed',
+  Circuit_Etape_Actuelle: '',
+  Index_Etape_Actuelle: 1000000,
+  Date_Debut_Etape_Actuelle: 2026-03-04T18:35:35.883Z,
+  Date_Fin_Etape_Actuelle: 2026-03-04T18:35:35.883Z,
+  Reference_Etape_Actuelle: null,
+  Qte_Etape_Actuelle: 0,
+  Obs_Etape_Actuelle: null,
+  Retard_Etape_Actuelle: 0,
+  Date_Ouverture_Dossier: 2026-02-19T00:00:00.000Z,
+  Date_Cloture_Dossier: null,
+  ID_Statut_Dossier: -1,
+  Libelle_Statut_Dossier: 'Operations completed',
+  Date_Creation: 2026-02-19T12:21:07.659Z,
+  Nom_Creation: 'TONBA LOIC'
+}
+ [getNotesDetail] Début - dossierId: 1
+ [getNotesDetail] Notes dans TNotesDetail (table directe): 151 lignes
+ [getNotesDetail] Première note directe: {
+  'ID Note Detail': 303,
+  'Colisage Dossier': 19,
+  Regime: 'TTC',
+  'Nbre Paquetage': 0.02,
+  Valeur: 1069.5,
+  'Base Poids Brut': 3.1,
+  'Base Poids Net': 3.14,
+  'Base Volume': 0.04,
+  Session: 0,
+  'Date Creation': 2026-03-04T18:35:35.720Z,
+  RowVer: Uint8Array(8) [
+    0, 0,  0,  0,
+    0, 0, 15, 99
+  ]
+}
+ [getNotesDetail] Notes récupérées depuis VNotesDetail: 64 lignes
+ [getNotesDetail] Première note (si existe): {
+  ID_Dossier: 1,
+  HS_Code: '27101930',
+  Pays_Origine: 'Canada',
+  ID_Regime_Declaration: 1,
+  ID_Regime_Douanier: 0,
+  Libelle_Regime_Douanier: '-',
+  Libelle_Regime_Declaration: '100% DC',
+  Regroupement_Client: 'RDR',
+  Regime: '100% DC',
+  Code_Devise: 'USD',
+  Nbre_Paquetage: 0,
+  Valeur: 139.17,
+  Base_Poids_Brut: 0.4,
+  Base_Poids_Net: 0.41,
+  Base_Volume: 0.01
+}
+📊 [getNotesDetail] Notes sérialisées: 64 lignes
+✅ [getNotesDetail] Notes mappées: 64 lignes
+✅ [getNotesDetail] Retour: { success: true, dataLength: 64 }
+[getTauxChangeDossier] Dossier 1, Date: Sat Feb 28 2026 00:00:00 GMT+0100 (heure normale d’Afrique de l’Ouest)
+[getTauxChangeDossier] 1 taux récupérés: [
+  {
+    ID_Devise: 144,
+    Code_Devise: 'USD',
+    Taux_Change: '655.957',
+    ID_Convertion: 10
+  }
+]
+ [getNotesDetail] Début - dossierId: 1
+ [getNotesDetail] Notes dans TNotesDetail (table directe): 151 lignes
+ [getNotesDetail] Première note directe: {
+  'ID Note Detail': 303,
+  'Colisage Dossier': 19,
+  Regime: 'TTC',
+  'Nbre Paquetage': 0.02,
+  Valeur: 1069.5,
+  'Base Poids Brut': 3.1,
+  'Base Poids Net': 3.14,
+  'Base Volume': 0.04,
+  Session: 0,
+  'Date Creation': 2026-03-04T18:35:35.720Z,
+  RowVer: Uint8Array(8) [
+    0, 0,  0,  0,
+    0, 0, 15, 99
+  ]
+}
+ [getNotesDetail] Notes récupérées depuis VNotesDetail: 64 lignes
+ [getNotesDetail] Première note (si existe): {
+  ID_Dossier: 1,
+  HS_Code: '27101930',
+  Pays_Origine: 'Canada',
+  ID_Regime_Declaration: 1,
+  ID_Regime_Douanier: 0,
+  Libelle_Regime_Douanier: '-',
+  Libelle_Regime_Declaration: '100% DC',
+  Regroupement_Client: 'RDR',
+  Regime: '100% DC',
+  Code_Devise: 'USD',
+  Nbre_Paquetage: 0,
+  Valeur: 139.17,
+  Base_Poids_Brut: 0.4,
+  Base_Poids_Net: 0.41,
+  Base_Volume: 0.01
+}
+📊 [getNotesDetail] Notes sérialisées: 64 lignes
+✅ [getNotesDetail] Notes mappées: 64 lignes
+✅ [getNotesDetail] Retour: { success: true, dataLength: 64 }
+[getTauxChangeDossier] Dossier 1, Date: Sat Feb 28 2026 00:00:00 GMT+0100 (heure normale d’Afrique de l’Ouest)
+[getTauxChangeDossier] 1 taux récupérés: [
+  {
+    ID_Devise: 144,
+    Code_Devise: 'USD',
+    Taux_Change: '655.957',
+    ID_Convertion: 10
+  }
+]
+dossierId 1
+ [getNotesDetail] Début - dossierId: 1
+ [getNotesDetail] Notes dans TNotesDetail (table directe): 0 lignes
+ [getNotesDetail] Première note directe: AUCUNE
+ [getNotesDetail] Notes récupérées depuis VNotesDetail: 0 lignes
+ [getNotesDetail] Première note (si existe): AUCUNE
+📊 [getNotesDetail] Notes sérialisées: 0 lignes
+✅ [getNotesDetail] Notes mappées: 0 lignes
+✅ [getNotesDetail] Retour: { success: true, dataLength: 0 }
+dossierId 1
+dossier {
+  ID_Dossier: 1,
+  ID_Branche: 0,
+  Nom_Branche: 'DEFAULT BRANCH',
+  ID_Entite: 0,
+  Nom_Entite: 'DEFAULT ENTITY',
+  ID_Groupe_Entite: 0,
+  ID_Pays: 0,
+  Libelle_Pays: 'DEFAULT COUNTRY',
+  Devise_Locale: '',
+  ID_Type_Dossier: 2,
+  Libelle_Type_Dossier: 'Sea Export',
+  ID_Sens_Trafic: '2',
+  Libelle_Sens_Trafic: 'Export',
+  ID_Mode_Transport: '1',
+  Libelle_Mode_Transport: 'Sea',
+  ID_Client: 4,
+  Nom_Client: 'ADDAX PETROLEUM CAMEROON COMPANY',
+  Description_Dossier: 'Exportations des potiers en Amérique',
+  No_OT: '001',
+  No_Dossier: 'CM25000090',
+  Nbre_Paquetage_Pesee: 12,
+  Poids_Brut_Pesee: 1500,
+  Poids_Net_Pesee: 1520,
+  Volume_Pesee: 20,
+  Responsable_ID: 1,
+  Nom_Responsable: 'TONBA LOIC',
+  Date_Declaration: null,
+  ID_Etape_Actuelle: 1,
+  Libelle_Etape_Actuelle: 'File Opening',
+  Circuit_Etape_Actuelle: '',
+  Index_Etape_Actuelle: 0,
+  Date_Debut_Etape_Actuelle: 2026-02-19T00:00:00.000Z,
+  Date_Fin_Etape_Actuelle: 2026-02-19T00:00:00.000Z,
+  Reference_Etape_Actuelle: null,
+  Qte_Etape_Actuelle: 0,
+  Obs_Etape_Actuelle: null,
+  Retard_Etape_Actuelle: 0,
+  Date_Ouverture_Dossier: 2026-02-19T00:00:00.000Z,
+  Date_Cloture_Dossier: null,
+  ID_Statut_Dossier: 0,
+  Libelle_Statut_Dossier: 'Operations in progress',
+  Date_Creation: 2026-02-19T12:21:07.659Z,
+  Nom_Creation: 'TONBA LOIC'
+}
+dossier {
+  ID_Dossier: 1,
+  ID_Branche: 0,
+  Nom_Branche: 'DEFAULT BRANCH',
+  ID_Entite: 0,
+  Nom_Entite: 'DEFAULT ENTITY',
+  ID_Groupe_Entite: 0,
+  ID_Pays: 0,
+  Libelle_Pays: 'DEFAULT COUNTRY',
+  Devise_Locale: '',
+  ID_Type_Dossier: 2,
+  Libelle_Type_Dossier: 'Sea Export',
+  ID_Sens_Trafic: '2',
+  Libelle_Sens_Trafic: 'Export',
+  ID_Mode_Transport: '1',
+  Libelle_Mode_Transport: 'Sea',
+  ID_Client: 4,
+  Nom_Client: 'ADDAX PETROLEUM CAMEROON COMPANY',
+  Description_Dossier: 'Exportations des potiers en Amérique',
+  No_OT: '001',
+  No_Dossier: 'CM25000090',
+  Nbre_Paquetage_Pesee: 12,
+  Poids_Brut_Pesee: 1500,
+  Poids_Net_Pesee: 1520,
+  Volume_Pesee: 20,
+  Responsable_ID: 1,
+  Nom_Responsable: 'TONBA LOIC',
+  Date_Declaration: null,
+  ID_Etape_Actuelle: 1,
+  Libelle_Etape_Actuelle: 'File Opening',
+  Circuit_Etape_Actuelle: '',
+  Index_Etape_Actuelle: 0,
+  Date_Debut_Etape_Actuelle: 2026-02-19T00:00:00.000Z,
+  Date_Fin_Etape_Actuelle: 2026-02-19T00:00:00.000Z,
+  Reference_Etape_Actuelle: null,
+  Qte_Etape_Actuelle: 0,
+  Obs_Etape_Actuelle: null,
+  Retard_Etape_Actuelle: 0,
+  Date_Ouverture_Dossier: 2026-02-19T00:00:00.000Z,
+  Date_Cloture_Dossier: null,
+  ID_Statut_Dossier: 0,
+  Libelle_Statut_Dossier: 'Operations in progress',
+  Date_Creation: 2026-02-19T12:21:07.659Z,
+  Nom_Creation: 'TONBA LOIC'
+}
+[genererNotesDetail] DEBUT - Dossier: 1 Date: 2026-02-26T23:00:00.000Z
+[genererNotesDetail] Étape 1: Vérification session
+[genererNotesDetail] Étape 2: Récupération dossier
+✅ [genererNotesDetail] Dossier trouvé - Statut: 0 Branche: 0
+[genererNotesDetail] Étape 3: Vérification colisages
+✅ [genererNotesDetail] Colisages trouvés: 106
+📝 [genererNotesDetail] Étape 4: Vérification HS Code et régimes
+✅ [genererNotesDetail] Tous les colisages ont HS Code et régime
+[genererNotesDetail] Étape 5: Récupération branche et entité
+✅ [genererNotesDetail] Branche trouvée - Entité: 0
+[genererNotesDetail] Étape 6: Recherche conversion pour date: 2026-02-26T23:00:00.000Z
+Date formatée: 2026-02-26
+✅ [genererNotesDetail] Conversions trouvées: 1
+Conversion ID: 9 Date: 2026-02-26T23:00:00.000Z
+📝 [genererNotesDetail] Étape 6b: Vérification des taux de change
+   Devises utilisées: USD
+✅ [genererNotesDetail] Tous les taux de change existent
+✅ [genererNotesDetail] FIN - SUCCESS
+dossierId 1
+dossier {
+  ID_Dossier: 1,
+  ID_Branche: 0,
+  Nom_Branche: 'DEFAULT BRANCH',
+  ID_Entite: 0,
+  Nom_Entite: 'DEFAULT ENTITY',
+  ID_Groupe_Entite: 0,
+  ID_Pays: 0,
+  Libelle_Pays: 'DEFAULT COUNTRY',
+  Devise_Locale: '',
+  ID_Type_Dossier: 2,
+  Libelle_Type_Dossier: 'Sea Export',
+  ID_Sens_Trafic: '2',
+  Libelle_Sens_Trafic: 'Export',
+  ID_Mode_Transport: '1',
+  Libelle_Mode_Transport: 'Sea',
+  ID_Client: 4,
+  Nom_Client: 'ADDAX PETROLEUM CAMEROON COMPANY',
+  Description_Dossier: 'Exportations des potiers en Amérique',
+  No_OT: '001',
+  No_Dossier: 'CM25000090',
+  Nbre_Paquetage_Pesee: 12,
+  Poids_Brut_Pesee: 1500,
+  Poids_Net_Pesee: 1520,
+  Volume_Pesee: 20,
+  Responsable_ID: 1,
+  Nom_Responsable: 'TONBA LOIC',
+  Date_Declaration: 2026-02-26T23:00:00.000Z,
+  ID_Etape_Actuelle: 10,
+  Libelle_Etape_Actuelle: 'Operations Completed',
+  Circuit_Etape_Actuelle: '',
+  Index_Etape_Actuelle: 1000000,
+  Date_Debut_Etape_Actuelle: 2026-03-04T18:42:26.503Z,
+  Date_Fin_Etape_Actuelle: 2026-03-04T18:42:26.503Z,
+  Reference_Etape_Actuelle: null,
+  Qte_Etape_Actuelle: 0,
+  Obs_Etape_Actuelle: null,
+  Retard_Etape_Actuelle: 0,
+  Date_Ouverture_Dossier: 2026-02-19T00:00:00.000Z,
+  Date_Cloture_Dossier: null,
+  ID_Statut_Dossier: -1,
+  Libelle_Statut_Dossier: 'Operations completed',
+  Date_Creation: 2026-02-19T12:21:07.659Z,
+  Nom_Creation: 'TONBA LOIC'
+}
+ [getNotesDetail] Début - dossierId: 1
+dossierId 1
+ [getNotesDetail] Notes dans TNotesDetail (table directe): 151 lignes
+ [getNotesDetail] Première note directe: {
+  'ID Note Detail': 454,
+  'Colisage Dossier': 19,
+  Regime: 'TTC',
+  'Nbre Paquetage': 0.02,
+  Valeur: 1069.5,
+  'Base Poids Brut': 3.1,
+  'Base Poids Net': 3.14,
+  'Base Volume': 0.04,
+  Session: 0,
+  'Date Creation': 2026-03-04T18:42:26.410Z,
+  RowVer: Uint8Array(8) [
+    0, 0,  0,   0,
+    0, 0, 16, 177
+  ]
+}
+dossier {
+  ID_Dossier: 1,
+  ID_Branche: 0,
+  Nom_Branche: 'DEFAULT BRANCH',
+  ID_Entite: 0,
+  Nom_Entite: 'DEFAULT ENTITY',
+  ID_Groupe_Entite: 0,
+  ID_Pays: 0,
+  Libelle_Pays: 'DEFAULT COUNTRY',
+  Devise_Locale: '',
+  ID_Type_Dossier: 2,
+  Libelle_Type_Dossier: 'Sea Export',
+  ID_Sens_Trafic: '2',
+  Libelle_Sens_Trafic: 'Export',
+  ID_Mode_Transport: '1',
+  Libelle_Mode_Transport: 'Sea',
+  ID_Client: 4,
+  Nom_Client: 'ADDAX PETROLEUM CAMEROON COMPANY',
+  Description_Dossier: 'Exportations des potiers en Amérique',
+  No_OT: '001',
+  No_Dossier: 'CM25000090',
+  Nbre_Paquetage_Pesee: 12,
+  Poids_Brut_Pesee: 1500,
+  Poids_Net_Pesee: 1520,
+  Volume_Pesee: 20,
+  Responsable_ID: 1,
+  Nom_Responsable: 'TONBA LOIC',
+  Date_Declaration: 2026-02-26T23:00:00.000Z,
+  ID_Etape_Actuelle: 10,
+  Libelle_Etape_Actuelle: 'Operations Completed',
+  Circuit_Etape_Actuelle: '',
+  Index_Etape_Actuelle: 1000000,
+  Date_Debut_Etape_Actuelle: 2026-03-04T18:42:26.503Z,
+  Date_Fin_Etape_Actuelle: 2026-03-04T18:42:26.503Z,
+  Reference_Etape_Actuelle: null,
+  Qte_Etape_Actuelle: 0,
+  Obs_Etape_Actuelle: null,
+  Retard_Etape_Actuelle: 0,
+  Date_Ouverture_Dossier: 2026-02-19T00:00:00.000Z,
+  Date_Cloture_Dossier: null,
+  ID_Statut_Dossier: -1,
+  Libelle_Statut_Dossier: 'Operations completed',
+  Date_Creation: 2026-02-19T12:21:07.659Z,
+  Nom_Creation: 'TONBA LOIC'
+}
+ [getNotesDetail] Notes récupérées depuis VNotesDetail: 64 lignes
+ [getNotesDetail] Première note (si existe): {
+  ID_Dossier: 1,
+  HS_Code: '27101930',
+  Pays_Origine: 'Canada',
+  ID_Regime_Declaration: 1,
+  ID_Regime_Douanier: 0,
+  Libelle_Regime_Douanier: '-',
+  Libelle_Regime_Declaration: '100% DC',
+  Regroupement_Client: 'RDR',
+  Regime: '100% DC',
+  Code_Devise: 'USD',
+  Nbre_Paquetage: 0,
+  Valeur: 139.17,
+  Base_Poids_Brut: 0.4,
+  Base_Poids_Net: 0.41,
+  Base_Volume: 0.01
+}
+📊 [getNotesDetail] Notes sérialisées: 64 lignes
+✅ [getNotesDetail] Notes mappées: 64 lignes
+✅ [getNotesDetail] Retour: { success: true, dataLength: 64 }
+[getTauxChangeDossier] Dossier 1, Date: Fri Feb 27 2026 00:00:00 GMT+0100 (heure normale d’Afrique de l’Ouest)
+[getTauxChangeDossier] 1 taux récupérés: [
+  {
+    ID_Devise: 144,
+    Code_Devise: 'USD',
+    Taux_Change: '655.97',
+    ID_Convertion: 9
+  }
+]
+dossierId 1
+dossier {
+  ID_Dossier: 1,
+  ID_Branche: 0,
+  Nom_Branche: 'DEFAULT BRANCH',
+  ID_Entite: 0,
+  Nom_Entite: 'DEFAULT ENTITY',
+  ID_Groupe_Entite: 0,
+  ID_Pays: 0,
+  Libelle_Pays: 'DEFAULT COUNTRY',
+  Devise_Locale: '',
+  ID_Type_Dossier: 2,
+  Libelle_Type_Dossier: 'Sea Export',
+  ID_Sens_Trafic: '2',
+  Libelle_Sens_Trafic: 'Export',
+  ID_Mode_Transport: '1',
+  Libelle_Mode_Transport: 'Sea',
+  ID_Client: 4,
+  Nom_Client: 'ADDAX PETROLEUM CAMEROON COMPANY',
+  Description_Dossier: 'Exportations des potiers en Amérique',
+  No_OT: '001',
+  No_Dossier: 'CM25000090',
+  Nbre_Paquetage_Pesee: 12,
+  Poids_Brut_Pesee: 1500,
+  Poids_Net_Pesee: 1520,
+  Volume_Pesee: 20,
+  Responsable_ID: 1,
+  Nom_Responsable: 'TONBA LOIC',
+  Date_Declaration: 2026-02-26T23:00:00.000Z,
+  ID_Etape_Actuelle: 10,
+  Libelle_Etape_Actuelle: 'Operations Completed',
+  Circuit_Etape_Actuelle: '',
+  Index_Etape_Actuelle: 1000000,
+  Date_Debut_Etape_Actuelle: 2026-03-04T18:42:26.503Z,
+  Date_Fin_Etape_Actuelle: 2026-03-04T18:42:26.503Z,
+  Reference_Etape_Actuelle: null,
+  Qte_Etape_Actuelle: 0,
+  Obs_Etape_Actuelle: null,
+  Retard_Etape_Actuelle: 0,
+  Date_Ouverture_Dossier: 2026-02-19T00:00:00.000Z,
+  Date_Cloture_Dossier: null,
+  ID_Statut_Dossier: -1,
+  Libelle_Statut_Dossier: 'Operations completed',
+  Date_Creation: 2026-02-19T12:21:07.659Z,
+  Nom_Creation: 'TONBA LOIC'
+}
+dossierId 1
+dossier {
+  ID_Dossier: 1,
+  ID_Branche: 0,
+  Nom_Branche: 'DEFAULT BRANCH',
+  ID_Entite: 0,
+  Nom_Entite: 'DEFAULT ENTITY',
+  ID_Groupe_Entite: 0,
+  ID_Pays: 0,
+  Libelle_Pays: 'DEFAULT COUNTRY',
+  Devise_Locale: '',
+  ID_Type_Dossier: 2,
+  Libelle_Type_Dossier: 'Sea Export',
+  ID_Sens_Trafic: '2',
+  Libelle_Sens_Trafic: 'Export',
+  ID_Mode_Transport: '1',
+  Libelle_Mode_Transport: 'Sea',
+  ID_Client: 4,
+  Nom_Client: 'ADDAX PETROLEUM CAMEROON COMPANY',
+  Description_Dossier: 'Exportations des potiers en Amérique',
+  No_OT: '001',
+  No_Dossier: 'CM25000090',
+  Nbre_Paquetage_Pesee: 12,
+  Poids_Brut_Pesee: 1500,
+  Poids_Net_Pesee: 1520,
+  Volume_Pesee: 20,
+  Responsable_ID: 1,
+  Nom_Responsable: 'TONBA LOIC',
+  Date_Declaration: 2026-02-26T23:00:00.000Z,
+  ID_Etape_Actuelle: 10,
+  Libelle_Etape_Actuelle: 'Operations Completed',
+  Circuit_Etape_Actuelle: '',
+  Index_Etape_Actuelle: 1000000,
+  Date_Debut_Etape_Actuelle: 2026-03-04T18:42:26.503Z,
+  Date_Fin_Etape_Actuelle: 2026-03-04T18:42:26.503Z,
+  Reference_Etape_Actuelle: null,
+  Qte_Etape_Actuelle: 0,
+  Obs_Etape_Actuelle: null,
+  Retard_Etape_Actuelle: 0,
+  Date_Ouverture_Dossier: 2026-02-19T00:00:00.000Z,
+  Date_Cloture_Dossier: null,
+  ID_Statut_Dossier: -1,
+  Libelle_Statut_Dossier: 'Operations completed',
+  Date_Creation: 2026-02-19T12:21:07.659Z,
+  Nom_Creation: 'TONBA LOIC'
+}
+ [getNotesDetail] Début - dossierId: 1
+ [getNotesDetail] Notes dans TNotesDetail (table directe): 151 lignes
+ [getNotesDetail] Première note directe: {
+  'ID Note Detail': 454,
+  'Colisage Dossier': 19,
+  Regime: 'TTC',
+  'Nbre Paquetage': 0.02,
+  Valeur: 1069.5,
+  'Base Poids Brut': 3.1,
+  'Base Poids Net': 3.14,
+  'Base Volume': 0.04,
+  Session: 0,
+  'Date Creation': 2026-03-04T18:42:26.410Z,
+  RowVer: Uint8Array(8) [
+    0, 0,  0,   0,
+    0, 0, 16, 177
+  ]
+}
+ [getNotesDetail] Notes récupérées depuis VNotesDetail: 64 lignes
+ [getNotesDetail] Première note (si existe): {
+  ID_Dossier: 1,
+  HS_Code: '27101930',
+  Pays_Origine: 'Canada',
+  ID_Regime_Declaration: 1,
+  ID_Regime_Douanier: 0,
+  Libelle_Regime_Douanier: '-',
+  Libelle_Regime_Declaration: '100% DC',
+  Regroupement_Client: 'RDR',
+  Regime: '100% DC',
+  Code_Devise: 'USD',
+  Nbre_Paquetage: 0,
+  Valeur: 139.17,
+  Base_Poids_Brut: 0.4,
+  Base_Poids_Net: 0.41,
+  Base_Volume: 0.01
+}
+📊 [getNotesDetail] Notes sérialisées: 64 lignes
+✅ [getNotesDetail] Notes mappées: 64 lignes
+✅ [getNotesDetail] Retour: { success: true, dataLength: 64 }
+[getTauxChangeDossier] Dossier 1, Date: Fri Feb 27 2026 00:00:00 GMT+0100 (heure normale d’Afrique de l’Ouest)
+[getTauxChangeDossier] 1 taux récupérés: [
+  {
+    ID_Devise: 144,
+    Code_Devise: 'USD',
+    Taux_Change: '655.97',
+    ID_Convertion: 9
+  }
+]
